@@ -66,7 +66,7 @@
       top: 3px; /* Se desliza dentro de la grabadora */
     }
 
-    /* Engranajes invisibles que giran encima del casete insertado */
+    /* Engranajes que giran encima del casete */
     .spindle {
       position: absolute;
       width: 16px;
@@ -85,7 +85,7 @@
       100% { transform: rotate(360deg); }
     }
 
-    /* Pantallita digital para configuraciones (Display) */
+    /* Pantallita digital (Display) */
     .display-area {
       position: absolute;
       top: 108px;
@@ -103,10 +103,11 @@
       font-size: 9px;
       text-transform: uppercase;
       letter-spacing: 1px;
+      overflow: hidden;
     }
 
-    /* INPUT SECRETO: Aparece solo al pasar el mouse por el display */
-    .input-overlay {
+    /* MENÚ DE PLAYLISTS RÁPIDAS: Aparece solo al pasar el mouse por el display */
+    .quick-menu {
       position: absolute;
       top: 0;
       left: 0;
@@ -115,9 +116,8 @@
       background: #0b0c0e;
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 3px;
-      padding: 3px;
+      justify-content: space-around;
+      padding: 4px;
       box-sizing: border-box;
       opacity: 0;
       pointer-events: none;
@@ -125,48 +125,36 @@
       border-radius: 3px;
     }
 
-    .display-area:hover .input-overlay {
+    .display-area:hover .quick-menu {
       opacity: 1;
       pointer-events: auto;
     }
 
-    .input-overlay input {
-      width: 70%;
-      background: #111;
-      border: 1px solid #ff3333;
+    .playlist-btn {
+      background: #222;
       color: #ff3333;
+      border: 1px solid #ff3333;
       font-size: 8px;
       font-family: monospace;
-      padding: 2px;
+      padding: 3px 5px;
+      cursor: pointer;
+      border-radius: 2px;
+      text-transform: uppercase;
     }
 
-    .input-overlay button {
+    .playlist-btn:hover {
       background: #ff3333;
       color: #000;
-      border: none;
-      font-size: 8px;
-      font-weight: bold;
-      cursor: pointer;
-      padding: 2px 4px;
     }
 
-    /* REPRODUCTOR DE SPOTIFY OCULTO (Se desliza desde abajo al pasar el mouse por la grabadora) */
-    .player-drawer {
+    /* REPRODUCTOR DE SPOTIFY 100% INVISIBLE Y OCULTO PERMANENTEMENTE */
+    .player-hidden-container {
       position: absolute;
-      bottom: -65px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 320px;
-      height: 80px;
-      transition: bottom 0.4s ease;
-      z-index: 10;
-      border-radius: 8px;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
       overflow: hidden;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-    }
-
-    .boombox-container:hover .player-drawer {
-      bottom: -40px; /* Se asoma para que puedas tocar los controles de Spotify */
     }
 
     iframe {
@@ -175,7 +163,7 @@
       border: none;
     }
 
-    /* BOTONES FÍSICOS DE LA IMAGEN (Mapeados encima de las teclas de plástico) */
+    /* BOTONES FÍSICOS DE LA IMAGEN (Encima de las teclas rojas de plástico) */
     .physical-buttons {
       position: absolute;
       top: 48px;
@@ -189,13 +177,13 @@
     .hidden-btn {
       width: 20px;
       height: 100%;
-      background: rgba(255, 255, 255, 0); /* Totalmente transparente */
+      background: rgba(255, 255, 255, 0);
       border: none;
       cursor: pointer;
     }
 
     .hidden-btn:active {
-      background: rgba(255, 255, 255, 0.15); /* Feedback sutil de click */
+      background: rgba(255, 255, 255, 0.15);
     }
   </style>
 </head>
@@ -203,37 +191,38 @@
 
   <div class="boombox-container">
     
-    <!-- Botones mapeados encima de los de plástico rojo -->
+    <!-- Botones físicos mapeados -->
     <div class="physical-buttons">
       <button class="hidden-btn" title="Grabar/Power" onclick="togglePower()"></button>
-      <button class="hidden-btn" title="Play" onclick="spinCassette(true)"></button>
+      <button class="hidden-btn" title="Play" onclick="pressPlay()"></button>
       <button class="hidden-btn" title="Retroceder"></button>
       <button class="hidden-btn" title="Avanzar"></button>
-      <button class="hidden-btn" title="Stop" onclick="spinCassette(false)"></button>
-      <button class="hidden-btn" title="Pausa" onclick="spinCassette(false)"></button>
+      <button class="hidden-btn" title="Stop" onclick="pressStop()"></button>
+      <button class="hidden-btn" title="Pausa" onclick="pressStop()"></button>
     </div>
 
-    <!-- Compartimento de Casete -->
+    <!-- Compartimento del Casete con animación -->
     <div class="cassette-slot">
       <div class="cassette-tape" id="myTape"></div>
-      <!-- Engranajes que giran encima -->
       <div class="spindle left" id="spindleL"></div>
       <div class="spindle right" id="spindleR"></div>
     </div>
 
-    <!-- Display Digital con Entrada Secreta de Link -->
+    <!-- Display con Botones de Selección Rápida al pasar el mouse -->
     <div class="display-area">
       <div id="statusText">POWER OFF</div>
-      <div style="font-size: 7px; color: #555; margin-top: 2px;">HOVER PARA LINK ✎</div>
+      <div style="font-size: 7px; color: #555; margin-top: 2px;">HOVER FOR MUSIC ♫</div>
       
-      <div class="input-overlay">
-        <input type="text" id="playlistUrl" placeholder="Link de Spotify...">
-        <button onclick="loadPlaylist()">OK</button>
+      <!-- Menú rápido -->
+      <div class="quick-menu">
+        <button class="playlist-btn" onclick="selectPlaylist('pop')">GIRLS</button>
+        <button class="playlist-btn" onclick="selectPlaylist('chill')">CHILL</button>
+        <button class="playlist-btn" onclick="selectPlaylist('rock')">ROCK</button>
       </div>
     </div>
 
-    <!-- Cajón deslizable de Spotify -->
-    <div class="player-drawer">
+    <!-- El "Fantasma" de Spotify (invisible para siempre) -->
+    <div class="player-hidden-container">
       <iframe id="musicFrame" src="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
     </div>
 
@@ -244,55 +233,41 @@
     const spindleL = document.getElementById('spindleL');
     const spindleR = document.getElementById('spindleR');
     const statusText = document.getElementById('statusText');
-    const playlistInput = document.getElementById('playlistUrl');
     const musicFrame = document.getElementById('musicFrame');
 
     let isPowerOn = false;
     let tapeLoaded = false;
+    let isPlaying = false;
 
-    window.onload = () => {
-      const savedLink = localStorage.getItem('userPlaylistStream');
-      if (savedLink) {
-        playlistInput.value = savedLink;
-        processAndLoadLink(savedLink);
-        // Si ya hay un link guardado, metemos el casete automáticamente
-        setTimeout(() => {
-          insertTape(true);
-        }, 500);
-      }
+    // CONFIGURA TUS PLAYLISTS AQUÍ (URL de inserción directa)
+    const playlists = {
+      pop: "https://open.spotify.com/embed/playlist/4rvFfn0CYCjEYWBB7qoA1t", 
+      chill: "https://open.spotify.com/embed/playlist/37i9dQZF1DX4sWSpwq3LiO", 
+      rock: "https://open.spotify.com/embed/playlist/37i9dQZF1DX3YSRunb9vDc"   
     };
 
-    function processAndLoadLink(rawLink) {
-      let embedUrl = "";
-      if (rawLink.includes("spotify.com")) {
-        embedUrl = rawLink.replace("open.spotify.com/", "open.spotify.com/embed/");
-      } else if (rawLink.includes("youtube.com") || rawLink.includes("youtu.be")) {
-        let videoId = "";
-        if (rawLink.includes("watch?v=")) {
-          videoId = rawLink.split("v=")[1].split("&")[0];
-        } else if (rawLink.includes("youtu.be/")) {
-          videoId = rawLink.split("youtu.be/")[1].split("?")[0];
-        }
-        embedUrl = `https://www.youtube.com/embed/${videoId}`;
-      } else {
-        embedUrl = rawLink;
+    window.onload = () => {
+      const lastActive = localStorage.getItem('lastSelectedPlaylist') || 'pop';
+      loadPlaylistLink(playlists[lastActive]);
+      insertTape(true);
+    };
+
+    function selectPlaylist(key) {
+      if (!isPowerOn) {
+        statusText.innerText = "TURN ON POWER";
+        return;
       }
-      musicFrame.src = embedUrl;
+      localStorage.setItem('lastSelectedPlaylist', key);
+      loadPlaylistLink(playlists[key]);
+      insertTape(true);
+      statusText.innerText = key.toUpperCase();
     }
 
-    function loadPlaylist() {
-      const link = playlistInput.value.trim();
-      if (link) {
-        localStorage.setItem('userPlaylistStream', link);
-        processAndLoadLink(link);
-        insertTape(true);
-        if (isPowerOn) {
-          statusText.innerText = "TAPE READY";
-        }
-      }
+    function loadPlaylistLink(url) {
+      // Le mandamos la orden de autoplay por las dudas si el navegador la acepta
+      musicFrame.src = url + "?autoplay=1"; 
     }
 
-    // Animación de meter / sacar el casete
     function insertTape(shouldInsert) {
       if (shouldInsert) {
         tape.classList.add('inserted');
@@ -307,16 +282,34 @@
     function togglePower() {
       isPowerOn = !isPowerOn;
       if (isPowerOn) {
-        statusText.innerText = tapeLoaded ? "TAPE READY" : "NO TAPE";
+        const lastActive = localStorage.getItem('lastSelectedPlaylist') || 'pop';
+        statusText.innerText = lastActive.toUpperCase();
       } else {
         statusText.innerText = "POWER OFF";
-        spinCassette(false);
+        pressStop();
       }
     }
 
-    function spinCassette(shouldSpin) {
+    // El botón físico PLAY ahora manda el comando de reproducción al reproductor oculto
+    function pressPlay() {
       if (!isPowerOn || !tapeLoaded) return;
-      if (shouldSpin) {
+      
+      // Enviamos el comando de reproducción al iframe oculto
+      musicFrame.contentWindow.postMessage({command: 'togglePlay'}, '*');
+      
+      isPlaying = true;
+      spinCassette(true);
+    }
+
+    // Los botones STOP/PAUSE detienen el reproductor y la animación
+    function pressStop() {
+      musicFrame.contentWindow.postMessage({command: 'pause'}, '*');
+      isPlaying = false;
+      spinCassette(false);
+    }
+
+    function spinCassette(shouldSpin) {
+      if (shouldSpin && isPlaying) {
         spindleL.style.opacity = "0.7";
         spindleR.style.opacity = "0.7";
         spindleL.style.animation = "spin 1.5s linear infinite";
@@ -327,7 +320,7 @@
         spindleR.style.animation = "none";
         spindleL.style.opacity = "0";
         spindleR.style.opacity = "0";
-        statusText.innerText = "STOPPED";
+        if (isPowerOn) statusText.innerText = "STOPPED";
       }
     }
   </script>
