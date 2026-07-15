@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Notion Stream Cassette</title>
   <style>
-    /* Variables para Modo Claro y Oscuro automáticos */
     :root {
       --bg-color: #f4f4f5;
       --deck-bg: #2d2d30;
@@ -51,9 +50,11 @@
       display: flex;
       flex-direction: column;
       gap: 15px;
+      position: relative;
+      transition: all 0.3s ease;
     }
 
-    /* Parte Superior: Compartimento del casete y Display */
+    /* Parte Superior */
     .deck-top {
       display: flex;
       justify-content: space-between;
@@ -74,7 +75,7 @@
       align-items: center;
     }
 
-    /* Los engranajes del casete que giran */
+    /* Engranajes giratorios */
     .spindle {
       width: 30px;
       height: 30px;
@@ -102,6 +103,8 @@
       flex-direction: column;
       justify-content: space-between;
       height: 90px;
+      cursor: pointer;
+      position: relative;
     }
 
     .display-status {
@@ -112,46 +115,72 @@
       letter-spacing: 1px;
     }
 
-    /* Contenedor del Reproductor Oculto/Integrado */
+    /* INPUT SECRETO: Solo aparece cuando pasás el mouse sobre el Display */
+    .playlist-input-area {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--display-bg);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      padding: 8px;
+      box-sizing: border-box;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .deck-display:hover .playlist-input-area {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .playlist-input-area input {
+      width: 70%;
+      background: #111;
+      border: 1px solid #444;
+      border-radius: 4px;
+      color: #39ff14;
+      padding: 6px;
+      font-size: 10px;
+      font-family: monospace;
+    }
+
+    .playlist-input-area button {
+      background: #333;
+      color: #39ff14;
+      border: 1px solid #444;
+      padding: 6px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 10px;
+      font-family: monospace;
+    }
+
+    /* REPRODUCTOR SECRETO (Deslizable): Oculto por defecto */
     .player-container {
       width: 100%;
-      height: 150px;
-      border-radius: 8px;
+      height: 0px; /* Escondido */
       overflow: hidden;
-      background: #000;
-      display: none; /* Se muestra solo al encender */
+      transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 8px;
+    }
+
+    /* Al pasar el mouse por encima de la casetera entera, el reproductor de Spotify se desliza hacia abajo */
+    .cassette-deck:hover .player-container {
+      height: 80px; /* Se abre lo suficiente para ver los controles de Spotify */
+      margin-bottom: 10px;
     }
 
     iframe {
       width: 100%;
       height: 100%;
       border: none;
-    }
-
-    /* Entrada de la Playlist */
-    .playlist-input-area {
-      display: flex;
-      gap: 8px;
-    }
-
-    .playlist-input-area input {
-      flex-grow: 1;
-      background: var(--input-bg);
-      border: 1px solid #444;
-      border-radius: 4px;
-      color: var(--input-text);
-      padding: 6px 10px;
-      font-size: 11px;
-    }
-
-    .playlist-input-area button {
-      background: #505055;
-      color: white;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 11px;
     }
 
     /* Botonera de control físico */
@@ -197,28 +226,29 @@
 <body>
 
   <div class="cassette-deck">
-    <!-- Fila Superior (Estética de la casetera) -->
+    <!-- Fila Superior -->
     <div class="deck-top">
       <div class="cassette-pocket">
         <div class="spindle left" id="spindleL"></div>
         <div class="spindle right" id="spindleR"></div>
       </div>
       
+      <!-- Display con Input Secreto al pasar el mouse encima -->
       <div class="deck-display">
         <div class="display-status" id="statusText">POWER OFF</div>
-        <div class="display-status" style="font-size: 9px; color: #555;" id="brandText">STEREO DECK</div>
+        <div class="display-status" style="font-size: 9px; color: #555;" id="brandText">PASA EL MOUSE AQUÍ ✎</div>
+        
+        <!-- El Input de texto ahora vive oculto dentro del propio display digital -->
+        <div class="playlist-input-area">
+          <input type="text" id="playlistUrl" placeholder="Link de Spotify...">
+          <button onclick="loadPlaylist()">OK</button>
+        </div>
       </div>
     </div>
 
-    <!-- El reproductor integrado de la plataforma (aparece al encender) -->
+    <!-- Reproductor que se desliza como cajón secreto solo al pasar el mouse por la casetera -->
     <div class="player-container" id="playerContainer">
       <iframe id="musicFrame" src="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
-    </div>
-
-    <!-- Entrada de Playlist (Guarda internamente) -->
-    <div class="playlist-input-area">
-      <input type="text" id="playlistUrl" placeholder="Pega link de Spotify, SoundCloud o YT...">
-      <button onclick="loadPlaylist()">Cargar</button>
     </div>
 
     <!-- Botonera -->
@@ -237,12 +267,10 @@
     const spindleR = document.getElementById('spindleR');
     const statusText = document.getElementById('statusText');
     const playlistInput = document.getElementById('playlistUrl');
-    const playerContainer = document.getElementById('playerContainer');
     const musicFrame = document.getElementById('musicFrame');
 
     let isPowerOn = false;
 
-    // Al cargar, recupera la playlist guardada de la memoria interna
     window.onload = () => {
       const savedLink = localStorage.getItem('userPlaylistStream');
       if (savedLink) {
@@ -251,12 +279,9 @@
       }
     };
 
-    // Procesa los links de Spotify, YT o SoundCloud para que no se bloqueen
     function processAndLoadLink(rawLink) {
       let embedUrl = "";
-
       if (rawLink.includes("spotify.com")) {
-        // Convierte link normal de Spotify a link de reproductor incrustado
         embedUrl = rawLink.replace("open.spotify.com/", "open.spotify.com/embed/");
       } else if (rawLink.includes("youtube.com") || rawLink.includes("youtu.be")) {
         let videoId = "";
@@ -267,21 +292,20 @@
         }
         embedUrl = `https://www.youtube.com/embed/${videoId}`;
       } else if (rawLink.includes("soundcloud.com")) {
-        embedUrl = `https://w.soundcloud.com/player/?url=${encodeURIComponent(rawLink)}&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true`;
+        embedUrl = `https://w.soundcloud.com/player/?url=${encodeURIComponent(rawLink)}&color=%23ff5500`;
       } else {
-        embedUrl = rawLink; // Si ya es un embed directo
+        embedUrl = rawLink;
       }
-
       musicFrame.src = embedUrl;
     }
 
     function loadPlaylist() {
       const link = playlistInput.value.trim();
       if (link) {
-        localStorage.setItem('userPlaylistStream', link); // Se guarda internamente
+        localStorage.setItem('userPlaylistStream', link);
         processAndLoadLink(link);
         if (isPowerOn) {
-          statusText.innerText = "PLAYLIST READY";
+          statusText.innerText = "TAPE READY";
         }
       }
     }
@@ -290,17 +314,14 @@
       isPowerOn = !isPowerOn;
       if (isPowerOn) {
         powerBtn.classList.add('on');
-        statusText.innerText = playlistInput.value ? "PLAYLIST READY" : "NO PLAYLIST";
-        playerContainer.style.display = 'block'; // Muestra el reproductor nativo
+        statusText.innerText = playlistInput.value ? "TAPE READY" : "NO TAPE";
       } else {
         powerBtn.classList.remove('on');
         statusText.innerText = "POWER OFF";
-        playerContainer.style.display = 'none'; // Apaga todo
         spinCassette(false);
       }
     }
 
-    // Control visual del casete
     function spinCassette(shouldSpin) {
       if (!isPowerOn) return;
       if (shouldSpin) {
