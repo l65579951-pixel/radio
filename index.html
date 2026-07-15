@@ -3,27 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Notion Stream Cassette</title>
+  <title>Grabadora Roja Retro</title>
   <style>
     :root {
       --bg-color: #f4f4f5;
-      --deck-bg: #2d2d30;
-      --deck-border: #1e1e21;
-      --text-color: #ffffff;
-      --display-bg: #0f1015;
-      --display-text: #00ff66;
-      --btn-grad-start: #5a5a60;
-      --btn-grad-end: #3a3a3d;
-      --input-bg: #1e1e21;
-      --input-text: #ccc;
     }
-
     @media (prefers-color-scheme: dark) {
       :root {
         --bg-color: #191919;
-        --deck-bg: #1a1a1c;
-        --deck-border: #0d0d0e;
-        --input-bg: #0f1015;
       }
     }
 
@@ -34,147 +21,152 @@
       align-items: center;
       height: 100vh;
       margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      transition: background 0.3s ease;
-    }
-
-    /* Estructura del Deck */
-    .cassette-deck {
-      background: var(--deck-bg);
-      border: 4px solid var(--deck-border);
-      border-radius: 12px;
-      padding: 20px;
-      width: 380px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
-      color: var(--text-color);
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      position: relative;
-      transition: all 0.3s ease;
-    }
-
-    /* Parte Superior */
-    .deck-top {
-      display: flex;
-      justify-content: space-between;
-      gap: 15px;
-    }
-
-    /* El compartimento del casete */
-    .cassette-pocket {
-      width: 180px;
-      height: 110px;
-      background: #0f0f12;
-      border: 3px solid #3e3e42;
-      border-radius: 6px;
-      position: relative;
+      font-family: monospace;
       overflow: hidden;
-      display: flex;
-      justify-content: center;
-      align-items: center;
     }
 
-    /* Engranajes giratorios */
-    .spindle {
-      width: 30px;
-      height: 30px;
-      background: #333;
-      border: 5px dotted #666;
-      border-radius: 50%;
-      position: absolute;
-      transition: transform 0.1s linear;
+    /* Contenedor principal con la imagen de tu grabadora roja */
+    .boombox-container {
+      position: relative;
+      width: 450px;
+      height: 320px;
+      background-image: url('https://i.postimg.cc/ncXV4Sc5/grabadora-roja-removebg-preview.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
     }
-    .spindle.left { left: 45px; }
-    .spindle.right { right: 45px; }
+
+    /* El compartimento donde se mete el casete */
+    .cassette-slot {
+      position: absolute;
+      top: 102px;
+      left: 77px;
+      width: 146px;
+      height: 94px;
+      overflow: hidden;
+      border-radius: 4px;
+    }
+
+    /* El casete rojo que se desliza */
+    .cassette-tape {
+      position: absolute;
+      top: -110px; /* Escondido arriba por defecto */
+      left: 3px;
+      width: 140px;
+      height: 88px;
+      background-image: url('https://i.postimg.cc/9fWvpztK/casette-rojo-removebg-preview.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      transition: top 1s cubic-bezier(0.25, 1, 0.5, 1);
+      z-index: 1;
+    }
+
+    /* Clase que activa la animación de inserción */
+    .cassette-tape.inserted {
+      top: 3px; /* Se desliza dentro de la grabadora */
+    }
+
+    /* Engranajes invisibles que giran encima del casete insertado */
+    .spindle {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      border: 3px dotted #111;
+      border-radius: 50%;
+      top: 38px;
+      z-index: 2;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .spindle.left { left: 42px; }
+    .spindle.right { right: 84px; }
 
     @keyframes spin {
       100% { transform: rotate(360deg); }
     }
 
-    /* Display Digital */
-    .deck-display {
-      flex-grow: 1;
-      background: var(--display-bg);
-      border-radius: 6px;
-      border: 2px solid #222;
-      padding: 10px;
+    /* Pantallita digital para configuraciones (Display) */
+    .display-area {
+      position: absolute;
+      top: 108px;
+      left: 242px;
+      width: 130px;
+      height: 38px;
+      background: #0b0c0e;
+      border-radius: 3px;
+      box-shadow: inset 0 0 5px #000;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      height: 90px;
-      cursor: pointer;
-      position: relative;
-    }
-
-    .display-status {
-      font-family: monospace;
-      color: var(--display-text);
-      font-size: 11px;
+      justify-content: center;
+      align-items: center;
+      color: #ff3333; /* Color rojo digital */
+      font-size: 9px;
       text-transform: uppercase;
       letter-spacing: 1px;
     }
 
-    /* INPUT SECRETO: Solo aparece cuando pasás el mouse sobre el Display */
-    .playlist-input-area {
+    /* INPUT SECRETO: Aparece solo al pasar el mouse por el display */
+    .input-overlay {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: var(--display-bg);
-      border-radius: 6px;
+      background: #0b0c0e;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 5px;
-      padding: 8px;
+      gap: 3px;
+      padding: 3px;
       box-sizing: border-box;
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.2s ease;
+      border-radius: 3px;
     }
 
-    .deck-display:hover .playlist-input-area {
+    .display-area:hover .input-overlay {
       opacity: 1;
       pointer-events: auto;
     }
 
-    .playlist-input-area input {
+    .input-overlay input {
       width: 70%;
       background: #111;
-      border: 1px solid #444;
-      border-radius: 4px;
-      color: #39ff14;
-      padding: 6px;
-      font-size: 10px;
+      border: 1px solid #ff3333;
+      color: #ff3333;
+      font-size: 8px;
       font-family: monospace;
+      padding: 2px;
     }
 
-    .playlist-input-area button {
-      background: #333;
-      color: #39ff14;
-      border: 1px solid #444;
-      padding: 6px;
-      border-radius: 4px;
+    .input-overlay button {
+      background: #ff3333;
+      color: #000;
+      border: none;
+      font-size: 8px;
+      font-weight: bold;
       cursor: pointer;
-      font-size: 10px;
-      font-family: monospace;
+      padding: 2px 4px;
     }
 
-    /* REPRODUCTOR SECRETO (Deslizable): Oculto por defecto */
-    .player-container {
-      width: 100%;
-      height: 0px; /* Escondido */
-      overflow: hidden;
-      transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    /* REPRODUCTOR DE SPOTIFY OCULTO (Se desliza desde abajo al pasar el mouse por la grabadora) */
+    .player-drawer {
+      position: absolute;
+      bottom: -65px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 320px;
+      height: 80px;
+      transition: bottom 0.4s ease;
+      z-index: 10;
       border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.5);
     }
 
-    /* Al pasar el mouse por encima de la casetera entera, el reproductor de Spotify se desliza hacia abajo */
-    .cassette-deck:hover .player-container {
-      height: 80px; /* Se abre lo suficiente para ver los controles de Spotify */
-      margin-bottom: 10px;
+    .boombox-container:hover .player-drawer {
+      bottom: -40px; /* Se asoma para que puedas tocar los controles de Spotify */
     }
 
     iframe {
@@ -183,86 +175,72 @@
       border: none;
     }
 
-    /* Botonera de control físico */
-    .deck-controls {
+    /* BOTONES FÍSICOS DE LA IMAGEN (Mapeados encima de las teclas de plástico) */
+    .physical-buttons {
+      position: absolute;
+      top: 48px;
+      left: 88px;
+      width: 140px;
+      height: 25px;
       display: flex;
       justify-content: space-between;
-      background: #151517;
-      padding: 8px;
-      border-radius: 6px;
     }
 
-    .btn {
-      background: linear-gradient(180deg, var(--btn-grad-start), var(--btn-grad-end));
-      border: 1px solid #111;
-      color: #eee;
-      padding: 8px 10px;
-      font-size: 9px;
-      font-weight: bold;
-      border-radius: 3px;
+    .hidden-btn {
+      width: 20px;
+      height: 100%;
+      background: rgba(255, 255, 255, 0); /* Totalmente transparente */
+      border: none;
       cursor: pointer;
-      box-shadow: 0 2px 3px rgba(0,0,0,0.4);
-      text-transform: uppercase;
     }
 
-    .btn:active, .btn.active {
-      background: #111;
-      color: var(--display-text);
-      box-shadow: none;
-      transform: translateY(1px);
-    }
-
-    .btn-power {
-      background: #8b1e1e;
-      color: #fff;
-    }
-    .btn-power.on {
-      background: #00ff66;
-      color: #000;
-      box-shadow: 0 0 8px #00ff66;
+    .hidden-btn:active {
+      background: rgba(255, 255, 255, 0.15); /* Feedback sutil de click */
     }
   </style>
 </head>
 <body>
 
-  <div class="cassette-deck">
-    <!-- Fila Superior -->
-    <div class="deck-top">
-      <div class="cassette-pocket">
-        <div class="spindle left" id="spindleL"></div>
-        <div class="spindle right" id="spindleR"></div>
-      </div>
+  <div class="boombox-container">
+    
+    <!-- Botones mapeados encima de los de plástico rojo -->
+    <div class="physical-buttons">
+      <button class="hidden-btn" title="Grabar/Power" onclick="togglePower()"></button>
+      <button class="hidden-btn" title="Play" onclick="spinCassette(true)"></button>
+      <button class="hidden-btn" title="Retroceder"></button>
+      <button class="hidden-btn" title="Avanzar"></button>
+      <button class="hidden-btn" title="Stop" onclick="spinCassette(false)"></button>
+      <button class="hidden-btn" title="Pausa" onclick="spinCassette(false)"></button>
+    </div>
+
+    <!-- Compartimento de Casete -->
+    <div class="cassette-slot">
+      <div class="cassette-tape" id="myTape"></div>
+      <!-- Engranajes que giran encima -->
+      <div class="spindle left" id="spindleL"></div>
+      <div class="spindle right" id="spindleR"></div>
+    </div>
+
+    <!-- Display Digital con Entrada Secreta de Link -->
+    <div class="display-area">
+      <div id="statusText">POWER OFF</div>
+      <div style="font-size: 7px; color: #555; margin-top: 2px;">HOVER PARA LINK ✎</div>
       
-      <!-- Display con Input Secreto al pasar el mouse encima -->
-      <div class="deck-display">
-        <div class="display-status" id="statusText">POWER OFF</div>
-        <div class="display-status" style="font-size: 9px; color: #555;" id="brandText">PASA EL MOUSE AQUÍ ✎</div>
-        
-        <!-- El Input de texto ahora vive oculto dentro del propio display digital -->
-        <div class="playlist-input-area">
-          <input type="text" id="playlistUrl" placeholder="Link de Spotify...">
-          <button onclick="loadPlaylist()">OK</button>
-        </div>
+      <div class="input-overlay">
+        <input type="text" id="playlistUrl" placeholder="Link de Spotify...">
+        <button onclick="loadPlaylist()">OK</button>
       </div>
     </div>
 
-    <!-- Reproductor que se desliza como cajón secreto solo al pasar el mouse por la casetera -->
-    <div class="player-container" id="playerContainer">
+    <!-- Cajón deslizable de Spotify -->
+    <div class="player-drawer">
       <iframe id="musicFrame" src="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
     </div>
 
-    <!-- Botonera -->
-    <div class="deck-controls">
-      <button class="btn btn-power" id="powerBtn" onclick="togglePower()">POWER</button>
-      <button class="btn" id="playBtn" onclick="spinCassette(true)">GIRAR</button>
-      <button class="btn" id="stopBtn" onclick="spinCassette(false)">PARAR</button>
-    </div>
   </div>
 
   <script>
-    const powerBtn = document.getElementById('powerBtn');
-    const playBtn = document.getElementById('playBtn');
-    const stopBtn = document.getElementById('stopBtn');
+    const tape = document.getElementById('myTape');
     const spindleL = document.getElementById('spindleL');
     const spindleR = document.getElementById('spindleR');
     const statusText = document.getElementById('statusText');
@@ -270,12 +248,17 @@
     const musicFrame = document.getElementById('musicFrame');
 
     let isPowerOn = false;
+    let tapeLoaded = false;
 
     window.onload = () => {
       const savedLink = localStorage.getItem('userPlaylistStream');
       if (savedLink) {
         playlistInput.value = savedLink;
         processAndLoadLink(savedLink);
+        // Si ya hay un link guardado, metemos el casete automáticamente
+        setTimeout(() => {
+          insertTape(true);
+        }, 500);
       }
     };
 
@@ -291,8 +274,6 @@
           videoId = rawLink.split("youtu.be/")[1].split("?")[0];
         }
         embedUrl = `https://www.youtube.com/embed/${videoId}`;
-      } else if (rawLink.includes("soundcloud.com")) {
-        embedUrl = `https://w.soundcloud.com/player/?url=${encodeURIComponent(rawLink)}&color=%23ff5500`;
       } else {
         embedUrl = rawLink;
       }
@@ -304,38 +285,49 @@
       if (link) {
         localStorage.setItem('userPlaylistStream', link);
         processAndLoadLink(link);
+        insertTape(true);
         if (isPowerOn) {
           statusText.innerText = "TAPE READY";
         }
       }
     }
 
+    // Animación de meter / sacar el casete
+    function insertTape(shouldInsert) {
+      if (shouldInsert) {
+        tape.classList.add('inserted');
+        tapeLoaded = true;
+      } else {
+        tape.classList.remove('inserted');
+        tapeLoaded = false;
+        spinCassette(false);
+      }
+    }
+
     function togglePower() {
       isPowerOn = !isPowerOn;
       if (isPowerOn) {
-        powerBtn.classList.add('on');
-        statusText.innerText = playlistInput.value ? "TAPE READY" : "NO TAPE";
+        statusText.innerText = tapeLoaded ? "TAPE READY" : "NO TAPE";
       } else {
-        powerBtn.classList.remove('on');
         statusText.innerText = "POWER OFF";
         spinCassette(false);
       }
     }
 
     function spinCassette(shouldSpin) {
-      if (!isPowerOn) return;
+      if (!isPowerOn || !tapeLoaded) return;
       if (shouldSpin) {
-        spindleL.style.animation = "spin 2s linear infinite";
-        spindleR.style.animation = "spin 2s linear infinite";
-        statusText.innerText = "TAPE RUNNING";
-        playBtn.classList.add('active');
-        stopBtn.classList.remove('active');
+        spindleL.style.opacity = "0.7";
+        spindleR.style.opacity = "0.7";
+        spindleL.style.animation = "spin 1.5s linear infinite";
+        spindleR.style.animation = "spin 1.5s linear infinite";
+        statusText.innerText = "RUNNING";
       } else {
         spindleL.style.animation = "none";
         spindleR.style.animation = "none";
-        statusText.innerText = "TAPE STOPPED";
-        playBtn.classList.remove('active');
-        stopBtn.classList.add('active');
+        spindleL.style.opacity = "0";
+        spindleR.style.opacity = "0";
+        statusText.innerText = "STOPPED";
       }
     }
   </script>
