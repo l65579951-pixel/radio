@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Grabadora Roja Retro</title>
+  <title>Grabadora Roja Retro Corregida</title>
   <style>
     :root {
       --bg-color: #f4f4f5;
@@ -23,45 +23,76 @@
       margin: 0;
       font-family: monospace;
       overflow: hidden;
+      perspective: 800px; /* Habilita el entorno 3D para la inserción */
     }
 
-    .boombox-container {
+    .widget-wrapper {
       position: relative;
       width: 450px;
       height: 320px;
+    }
+
+    /* CAPA INFERIOR: Spotify oculto físicamente detrás */
+    .spotify-underlay {
+      position: absolute;
+      top: 110px;
+      left: 77px;
+      width: 300px;
+      height: 80px;
+      z-index: 1;
+    }
+
+    /* CAPA MEDIA: La grabadora roja */
+    .boombox-front {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       background-image: url('https://i.postimg.cc/ncXV4Sc5/grabadora-roja-removebg-preview.png');
       background-size: contain;
       background-repeat: no-repeat;
       background-position: center;
+      z-index: 5;
+      pointer-events: none;
     }
 
+    /* Ranura del casete */
     .cassette-slot {
       position: absolute;
       top: 102px;
       left: 77px;
       width: 146px;
       height: 94px;
-      overflow: hidden;
-      border-radius: 4px;
+      z-index: 6;
+      pointer-events: none;
+      transform-style: preserve-3d;
     }
 
+    /* EL CASETE: Ahora empieza inclinado y fuera de eje, simulando la mano introduciéndolo */
     .cassette-tape {
       position: absolute;
-      top: -110px; 
+      top: -60px;
       left: 3px;
       width: 140px;
       height: 88px;
       background-image: url('https://i.postimg.cc/9fWvpztK/casette-rojo-removebg-preview.png');
       background-size: contain;
       background-repeat: no-repeat;
-      transition: top 1s cubic-bezier(0.25, 1, 0.5, 1);
-      z-index: 1;
+      opacity: 0;
+      /* Animación en diagonal con inclinación simulando la imagen */
+      transform: translateY(-20px) translateZ(50px) rotateX(-35deg);
+      transition: all 0.9s cubic-bezier(0.25, 1, 0.5, 1);
     }
 
+    /* CUANDO SE INSERTA: Entra en diagonal al fondo y se endereza al encastrar */
     .cassette-tape.inserted {
-      top: 3px; 
+      top: 3px;
+      opacity: 1;
+      transform: translateY(0) translateZ(0) rotateX(0deg);
     }
 
+    /* Engranajes de rotación */
     .spindle {
       position: absolute;
       width: 16px;
@@ -69,7 +100,6 @@
       border: 3px dotted #111;
       border-radius: 50%;
       top: 38px;
-      z-index: 2;
       opacity: 0;
       transition: opacity 0.3s;
     }
@@ -80,6 +110,7 @@
       100% { transform: rotate(360deg); }
     }
 
+    /* Pantalla Digital */
     .display-area {
       position: absolute;
       top: 108px;
@@ -96,10 +127,10 @@
       font-size: 9px;
       text-transform: uppercase;
       letter-spacing: 1px;
+      z-index: 7;
     }
 
-    /* EL PANEL SECRETO: Esconde las playlists y el reproductor real juntos */
-    .control-overlay {
+    .input-overlay {
       position: absolute;
       top: 0;
       left: 0;
@@ -107,74 +138,43 @@
       height: 100%;
       background: #0b0c0e;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 5px;
+      gap: 3px;
+      padding: 3px;
+      box-sizing: border-box;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.3s ease;
-      z-index: 20;
-      border-radius: 12px;
+      transition: opacity 0.2s ease;
+      border-radius: 3px;
     }
 
-    /* Cuando pasás el mouse por la pantalla digital, se revela el control de música */
-    .display-area:hover .control-overlay {
-      position: fixed;
-      top: calc(50% - 60px);
-      left: calc(50% - 160px);
-      width: 320px;
-      height: 150px;
-      padding: 10px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-      border: 3px solid #ff3333;
+    .display-area:hover .input-overlay {
       opacity: 1;
       pointer-events: auto;
     }
 
-    .menu-title {
-      color: #ff3333;
-      font-size: 10px;
-      margin-bottom: 2px;
-      text-align: center;
-      width: 100%;
-    }
-
-    .btn-group {
-      display: flex;
-      gap: 5px;
-      margin-bottom: 8px;
-    }
-
-    .playlist-btn {
-      background: #222;
-      color: #ff3333;
+    .input-overlay input {
+      width: 70%;
+      background: #111;
       border: 1px solid #ff3333;
+      color: #ff3333;
       font-size: 8px;
       font-family: monospace;
-      padding: 3px 6px;
-      cursor: pointer;
-      border-radius: 2px;
+      padding: 2px;
     }
 
-    .playlist-btn:hover {
+    .input-overlay button {
       background: #ff3333;
       color: #000;
-    }
-
-    .player-frame-wrapper {
-      width: 100%;
-      height: 80px;
-      border-radius: 4px;
-      overflow: hidden;
-    }
-
-    iframe {
-      width: 100%;
-      height: 100%;
       border: none;
+      font-size: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      padding: 2px 4px;
     }
 
+    /* Botones de control físico */
     .physical-buttons {
       position: absolute;
       top: 48px;
@@ -183,6 +183,7 @@
       height: 25px;
       display: flex;
       justify-content: space-between;
+      z-index: 10;
     }
 
     .hidden-btn {
@@ -196,9 +197,24 @@
 </head>
 <body>
 
-  <div class="boombox-container">
+  <div class="widget-wrapper">
     
-    <!-- Botones estéticos de la imagen -->
+    <!-- FANTASMA: Spotify abajo -->
+    <div class="spotify-underlay">
+      <iframe id="musicFrame" width="100%" height="80" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+    </div>
+
+    <!-- FACHADA: Grabadora -->
+    <div class="boombox-front"></div>
+
+    <!-- RANURA Y CASETE 3D -->
+    <div class="cassette-slot">
+      <div class="cassette-tape" id="myTape"></div>
+      <div class="spindle left" id="spindleL"></div>
+      <div class="spindle right" id="spindleR"></div>
+    </div>
+
+    <!-- Mapeo de botones físicos -->
     <div class="physical-buttons">
       <button class="hidden-btn" title="Power" onclick="togglePower()"></button>
       <button class="hidden-btn" title="Play" onclick="spinCassette(true)"></button>
@@ -208,61 +224,67 @@
       <button class="hidden-btn" title="Pause" onclick="spinCassette(false)"></button>
     </div>
 
-    <!-- Compartimento animado -->
-    <div class="cassette-slot">
-      <div class="cassette-tape" id="myTape"></div>
-      <div class="spindle left" id="spindleL"></div>
-      <div class="spindle right" id="spindleR"></div>
-    </div>
-
-    <!-- Pantalla digital con el truco flotante -->
+    <!-- Buscador en el Display -->
     <div class="display-area">
       <div id="statusText">POWER OFF</div>
-      <div style="font-size: 7px; color: #555; margin-top: 2px;">CONFIGURAR ✎</div>
+      <div style="font-size: 7px; color: #555; margin-top: 2px;">PEGAR LINK ✎</div>
       
-      <!-- Este recuadro solo aparece flotando cuando ponés el mouse en CONFIGURAR -->
-      <div class="control-overlay">
-        <div class="menu-title">SELECCIONÁ Y DALE PLAY EN SPOTIFY:</div>
-        <div class="btn-group">
-          <button class="playlist-btn" onclick="selectPlaylist('pop')">GIRLS</button>
-          <button class="playlist-btn" onclick="selectPlaylist('chill')">CHILL</button>
-          <button class="playlist-btn" onclick="selectPlaylist('rock')">ROCK</button>
-        </div>
-        <div class="player-frame-wrapper">
-          <iframe id="musicFrame" src="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
-        </div>
+      <div class="input-overlay">
+        <input type="text" id="playlistUrl" placeholder="Link de Spotify...">
+        <button onclick="loadPlaylist()">OK</button>
       </div>
     </div>
 
   </div>
 
-  <script>
+  <script {nonce}>
     const tape = document.getElementById('myTape');
     const spindleL = document.getElementById('spindleL');
     const spindleR = document.getElementById('spindleR');
     const statusText = document.getElementById('statusText');
+    const playlistInput = document.getElementById('playlistUrl');
     const musicFrame = document.getElementById('musicFrame');
 
     let isPowerOn = false;
     let tapeLoaded = false;
 
-    const playlists = {
-      pop: "https://open.spotify.com/embed/playlist/4rvFfn0CYCjEYWBB7qoA1t", 
-      chill: "https://open.spotify.com/embed/playlist/37i9dQZF1DX4sWSpwq3LiO", 
-      rock: "https://open.spotify.com/embed/playlist/37i9dQZF1DX3YSRunb9vDc"   
-    };
-
     window.onload = () => {
-      const lastActive = localStorage.getItem('lastSelectedPlaylist') || 'pop';
-      musicFrame.src = playlists[lastActive];
-      insertTape(true);
+      const savedLink = localStorage.getItem('userPlaylistStream');
+      if (savedLink) {
+        playlistInput.value = savedLink;
+        processAndLoadLink(savedLink);
+        setTimeout(() => {
+          insertTape(true);
+        }, 600);
+      }
     };
 
-    function selectPlaylist(key) {
-      if (!isPowerOn) return;
-      localStorage.setItem('lastSelectedPlaylist', key);
-      musicFrame.src = playlists[key];
-      statusText.innerText = key.toUpperCase();
+    function processAndLoadLink(rawLink) {
+      let embedUrl = "";
+      if (rawLink.includes("spotify.com")) {
+        embedUrl = rawLink.replace("open.spotify.com/", "open.spotify.com/embed/");
+      } else if (rawLink.includes("youtube.com") || rawLink.includes("youtu.be")) {
+        let videoId = "";
+        if (rawLink.includes("watch?v=")) {
+          videoId = rawLink.split("v=")[1].split("&")[0];
+        } else if (rawLink.includes("youtu.be/")) {
+          videoId = rawLink.split("youtu.be/")[1].split("?")[0];
+        }
+        embedUrl = `https://www.youtube.com/embed/${videoId}`;
+      } else {
+        embedUrl = rawLink;
+      }
+      musicFrame.src = embedUrl;
+    }
+
+    function loadPlaylist() {
+      const link = playlistInput.value.trim();
+      if (link) {
+        localStorage.setItem('userPlaylistStream', link);
+        processAndLoadLink(link);
+        insertTape(true);
+        if (isPowerOn) statusText.innerText = "TAPE READY";
+      }
     }
 
     function insertTape(shouldInsert) {
@@ -278,8 +300,7 @@
     function togglePower() {
       isPowerOn = !isPowerOn;
       if (isPowerOn) {
-        const lastActive = localStorage.getItem('lastSelectedPlaylist') || 'pop';
-        statusText.innerText = lastActive.toUpperCase();
+        statusText.innerText = tapeLoaded ? "TAPE READY" : "NO TAPE";
       } else {
         statusText.innerText = "POWER OFF";
         spinCassette(false);
