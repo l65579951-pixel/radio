@@ -25,7 +25,6 @@
       overflow: hidden;
     }
 
-    /* Contenedor principal con la imagen de tu grabadora roja */
     .boombox-container {
       position: relative;
       width: 450px;
@@ -36,7 +35,6 @@
       background-position: center;
     }
 
-    /* El compartimento donde se mete el casete */
     .cassette-slot {
       position: absolute;
       top: 102px;
@@ -47,10 +45,9 @@
       border-radius: 4px;
     }
 
-    /* El casete rojo que se desliza */
     .cassette-tape {
       position: absolute;
-      top: -110px; /* Escondido arriba por defecto */
+      top: -110px; 
       left: 3px;
       width: 140px;
       height: 88px;
@@ -61,12 +58,10 @@
       z-index: 1;
     }
 
-    /* Clase que activa la animación de inserción */
     .cassette-tape.inserted {
-      top: 3px; /* Se desliza dentro de la grabadora */
+      top: 3px; 
     }
 
-    /* Engranajes que giran encima del casete */
     .spindle {
       position: absolute;
       width: 16px;
@@ -85,7 +80,6 @@
       100% { transform: rotate(360deg); }
     }
 
-    /* Pantallita digital (Display) */
     .display-area {
       position: absolute;
       top: 108px;
@@ -94,20 +88,18 @@
       height: 38px;
       background: #0b0c0e;
       border-radius: 3px;
-      box-shadow: inset 0 0 5px #000;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      color: #ff3333; /* Color rojo digital */
+      color: #ff3333;
       font-size: 9px;
       text-transform: uppercase;
       letter-spacing: 1px;
-      overflow: hidden;
     }
 
-    /* MENÚ DE PLAYLISTS RÁPIDAS: Aparece solo al pasar el mouse por el display */
-    .quick-menu {
+    /* EL PANEL SECRETO: Esconde las playlists y el reproductor real juntos */
+    .control-overlay {
       position: absolute;
       top: 0;
       left: 0;
@@ -115,19 +107,43 @@
       height: 100%;
       background: #0b0c0e;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: space-around;
-      padding: 4px;
-      box-sizing: border-box;
+      justify-content: center;
+      gap: 5px;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.2s ease;
-      border-radius: 3px;
+      transition: opacity 0.3s ease;
+      z-index: 20;
+      border-radius: 12px;
     }
 
-    .display-area:hover .quick-menu {
+    /* Cuando pasás el mouse por la pantalla digital, se revela el control de música */
+    .display-area:hover .control-overlay {
+      position: fixed;
+      top: calc(50% - 60px);
+      left: calc(50% - 160px);
+      width: 320px;
+      height: 150px;
+      padding: 10px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      border: 3px solid #ff3333;
       opacity: 1;
       pointer-events: auto;
+    }
+
+    .menu-title {
+      color: #ff3333;
+      font-size: 10px;
+      margin-bottom: 2px;
+      text-align: center;
+      width: 100%;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 8px;
     }
 
     .playlist-btn {
@@ -136,10 +152,9 @@
       border: 1px solid #ff3333;
       font-size: 8px;
       font-family: monospace;
-      padding: 3px 5px;
+      padding: 3px 6px;
       cursor: pointer;
       border-radius: 2px;
-      text-transform: uppercase;
     }
 
     .playlist-btn:hover {
@@ -147,13 +162,10 @@
       color: #000;
     }
 
-    /* REPRODUCTOR DE SPOTIFY 100% INVISIBLE Y OCULTO PERMANENTEMENTE */
-    .player-hidden-container {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      opacity: 0;
-      pointer-events: none;
+    .player-frame-wrapper {
+      width: 100%;
+      height: 80px;
+      border-radius: 4px;
       overflow: hidden;
     }
 
@@ -163,7 +175,6 @@
       border: none;
     }
 
-    /* BOTONES FÍSICOS DE LA IMAGEN (Encima de las teclas rojas de plástico) */
     .physical-buttons {
       position: absolute;
       top: 48px;
@@ -181,49 +192,46 @@
       border: none;
       cursor: pointer;
     }
-
-    .hidden-btn:active {
-      background: rgba(255, 255, 255, 0.15);
-    }
   </style>
 </head>
 <body>
 
   <div class="boombox-container">
     
-    <!-- Botones físicos mapeados -->
+    <!-- Botones estéticos de la imagen -->
     <div class="physical-buttons">
-      <button class="hidden-btn" title="Grabar/Power" onclick="togglePower()"></button>
-      <button class="hidden-btn" title="Play" onclick="pressPlay()"></button>
-      <button class="hidden-btn" title="Retroceder"></button>
-      <button class="hidden-btn" title="Avanzar"></button>
-      <button class="hidden-btn" title="Stop" onclick="pressStop()"></button>
-      <button class="hidden-btn" title="Pausa" onclick="pressStop()"></button>
+      <button class="hidden-btn" title="Power" onclick="togglePower()"></button>
+      <button class="hidden-btn" title="Play" onclick="spinCassette(true)"></button>
+      <button class="hidden-btn" title="Rewind"></button>
+      <button class="hidden-btn" title="FastForward"></button>
+      <button class="hidden-btn" title="Stop" onclick="spinCassette(false)"></button>
+      <button class="hidden-btn" title="Pause" onclick="spinCassette(false)"></button>
     </div>
 
-    <!-- Compartimento del Casete con animación -->
+    <!-- Compartimento animado -->
     <div class="cassette-slot">
       <div class="cassette-tape" id="myTape"></div>
       <div class="spindle left" id="spindleL"></div>
       <div class="spindle right" id="spindleR"></div>
     </div>
 
-    <!-- Display con Botones de Selección Rápida al pasar el mouse -->
+    <!-- Pantalla digital con el truco flotante -->
     <div class="display-area">
       <div id="statusText">POWER OFF</div>
-      <div style="font-size: 7px; color: #555; margin-top: 2px;">HOVER FOR MUSIC ♫</div>
+      <div style="font-size: 7px; color: #555; margin-top: 2px;">CONFIGURAR ✎</div>
       
-      <!-- Menú rápido -->
-      <div class="quick-menu">
-        <button class="playlist-btn" onclick="selectPlaylist('pop')">GIRLS</button>
-        <button class="playlist-btn" onclick="selectPlaylist('chill')">CHILL</button>
-        <button class="playlist-btn" onclick="selectPlaylist('rock')">ROCK</button>
+      <!-- Este recuadro solo aparece flotando cuando ponés el mouse en CONFIGURAR -->
+      <div class="control-overlay">
+        <div class="menu-title">SELECCIONÁ Y DALE PLAY EN SPOTIFY:</div>
+        <div class="btn-group">
+          <button class="playlist-btn" onclick="selectPlaylist('pop')">GIRLS</button>
+          <button class="playlist-btn" onclick="selectPlaylist('chill')">CHILL</button>
+          <button class="playlist-btn" onclick="selectPlaylist('rock')">ROCK</button>
+        </div>
+        <div class="player-frame-wrapper">
+          <iframe id="musicFrame" src="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+        </div>
       </div>
-    </div>
-
-    <!-- El "Fantasma" de Spotify (invisible para siempre) -->
-    <div class="player-hidden-container">
-      <iframe id="musicFrame" src="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
     </div>
 
   </div>
@@ -237,9 +245,7 @@
 
     let isPowerOn = false;
     let tapeLoaded = false;
-    let isPlaying = false;
 
-    // CONFIGURA TUS PLAYLISTS AQUÍ (URL de inserción directa)
     const playlists = {
       pop: "https://open.spotify.com/embed/playlist/4rvFfn0CYCjEYWBB7qoA1t", 
       chill: "https://open.spotify.com/embed/playlist/37i9dQZF1DX4sWSpwq3LiO", 
@@ -248,24 +254,15 @@
 
     window.onload = () => {
       const lastActive = localStorage.getItem('lastSelectedPlaylist') || 'pop';
-      loadPlaylistLink(playlists[lastActive]);
+      musicFrame.src = playlists[lastActive];
       insertTape(true);
     };
 
     function selectPlaylist(key) {
-      if (!isPowerOn) {
-        statusText.innerText = "TURN ON POWER";
-        return;
-      }
+      if (!isPowerOn) return;
       localStorage.setItem('lastSelectedPlaylist', key);
-      loadPlaylistLink(playlists[key]);
-      insertTape(true);
+      musicFrame.src = playlists[key];
       statusText.innerText = key.toUpperCase();
-    }
-
-    function loadPlaylistLink(url) {
-      // Le mandamos la orden de autoplay por las dudas si el navegador la acepta
-      musicFrame.src = url + "?autoplay=1"; 
     }
 
     function insertTape(shouldInsert) {
@@ -275,7 +272,6 @@
       } else {
         tape.classList.remove('inserted');
         tapeLoaded = false;
-        spinCassette(false);
       }
     }
 
@@ -286,30 +282,13 @@
         statusText.innerText = lastActive.toUpperCase();
       } else {
         statusText.innerText = "POWER OFF";
-        pressStop();
+        spinCassette(false);
       }
     }
 
-    // El botón físico PLAY ahora manda el comando de reproducción al reproductor oculto
-    function pressPlay() {
-      if (!isPowerOn || !tapeLoaded) return;
-      
-      // Enviamos el comando de reproducción al iframe oculto
-      musicFrame.contentWindow.postMessage({command: 'togglePlay'}, '*');
-      
-      isPlaying = true;
-      spinCassette(true);
-    }
-
-    // Los botones STOP/PAUSE detienen el reproductor y la animación
-    function pressStop() {
-      musicFrame.contentWindow.postMessage({command: 'pause'}, '*');
-      isPlaying = false;
-      spinCassette(false);
-    }
-
     function spinCassette(shouldSpin) {
-      if (shouldSpin && isPlaying) {
+      if (!isPowerOn || !tapeLoaded) return;
+      if (shouldSpin) {
         spindleL.style.opacity = "0.7";
         spindleR.style.opacity = "0.7";
         spindleL.style.animation = "spin 1.5s linear infinite";
@@ -320,7 +299,7 @@
         spindleR.style.animation = "none";
         spindleL.style.opacity = "0";
         spindleR.style.opacity = "0";
-        if (isPowerOn) statusText.innerText = "STOPPED";
+        statusText.innerText = "STOPPED";
       }
     }
   </script>
