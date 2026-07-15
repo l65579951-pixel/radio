@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Notion Cassette Widget</title>
+  <title>Notion Stream Cassette</title>
   <style>
     /* Variables para Modo Claro y Oscuro automáticos */
     :root {
@@ -39,7 +39,7 @@
       transition: background 0.3s ease;
     }
 
-    /* La Grabadora de Casete (Deck) */
+    /* Estructura del Deck */
     .cassette-deck {
       background: var(--deck-bg);
       border: 4px solid var(--deck-border);
@@ -60,7 +60,7 @@
       gap: 15px;
     }
 
-    /* El compartimento donde gira el casete */
+    /* El compartimento del casete */
     .cassette-pocket {
       width: 180px;
       height: 110px;
@@ -74,7 +74,7 @@
       align-items: center;
     }
 
-    /* Los engranajes del casete que giran al dar PLAY */
+    /* Los engranajes del casete que giran */
     .spindle {
       width: 30px;
       height: 30px;
@@ -91,7 +91,7 @@
       100% { transform: rotate(360deg); }
     }
 
-    /* Display Digital (Sintonizador/Info) */
+    /* Display Digital */
     .deck-display {
       flex-grow: 1;
       background: var(--display-bg);
@@ -112,15 +112,23 @@
       letter-spacing: 1px;
     }
 
-    .display-time {
-      font-family: monospace;
-      color: var(--display-text);
-      font-size: 18px;
-      text-align: right;
-      text-shadow: 0 0 5px var(--display-text);
+    /* Contenedor del Reproductor Oculto/Integrado */
+    .player-container {
+      width: 100%;
+      height: 150px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #000;
+      display: none; /* Se muestra solo al encender */
     }
 
-    /* Entrada interna de la Playlist (Ocultable) */
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    /* Entrada de la Playlist */
     .playlist-input-area {
       display: flex;
       gap: 8px;
@@ -184,151 +192,131 @@
       color: #000;
       box-shadow: 0 0 8px #00ff66;
     }
-
-    /* Reproductor de audio real oculto */
-    audio {
-      display: none;
-    }
   </style>
 </head>
 <body>
 
   <div class="cassette-deck">
-    <!-- Fila Superior -->
+    <!-- Fila Superior (Estética de la casetera) -->
     <div class="deck-top">
-      <!-- Casete Físico -->
       <div class="cassette-pocket">
         <div class="spindle left" id="spindleL"></div>
         <div class="spindle right" id="spindleR"></div>
       </div>
       
-      <!-- Display Digital -->
       <div class="deck-display">
         <div class="display-status" id="statusText">POWER OFF</div>
-        <div class="display-time" id="counter">00:00</div>
+        <div class="display-status" style="font-size: 9px; color: #555;" id="brandText">STEREO DECK</div>
       </div>
     </div>
 
-    <!-- Buscador/Pegador de Playlist (Guarda internamente) -->
+    <!-- El reproductor integrado de la plataforma (aparece al encender) -->
+    <div class="player-container" id="playerContainer">
+      <iframe id="musicFrame" src="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+    </div>
+
+    <!-- Entrada de Playlist (Guarda internamente) -->
     <div class="playlist-input-area">
-      <input type="text" id="playlistUrl" placeholder="Pega el link de tu audio (.mp3)...">
+      <input type="text" id="playlistUrl" placeholder="Pega link de Spotify, SoundCloud o YT...">
       <button onclick="loadPlaylist()">Cargar</button>
     </div>
 
-    <!-- Botonera de la Grabadora -->
+    <!-- Botonera -->
     <div class="deck-controls">
       <button class="btn btn-power" id="powerBtn" onclick="togglePower()">POWER</button>
-      <button class="btn" id="playBtn" onclick="playAudio()">PLAY</button>
-      <button class="btn" id="pauseBtn" onclick="pauseAudio()">PAUSE</button>
-      <button class="btn" id="muteBtn" onclick="toggleMute()">MUTE</button>
+      <button class="btn" id="playBtn" onclick="spinCassette(true)">GIRAR</button>
+      <button class="btn" id="stopBtn" onclick="spinCassette(false)">PARAR</button>
     </div>
   </div>
 
-  <!-- Elemento de audio real de HTML5 -->
-  <audio id="audioPlayer" loop></audio>
-
   <script>
-    const audio = document.getElementById('audioPlayer');
     const powerBtn = document.getElementById('powerBtn');
     const playBtn = document.getElementById('playBtn');
-    const pauseBtn = document.getElementById('pauseBtn');
-    const muteBtn = document.getElementById('muteBtn');
+    const stopBtn = document.getElementById('stopBtn');
     const spindleL = document.getElementById('spindleL');
     const spindleR = document.getElementById('spindleR');
     const statusText = document.getElementById('statusText');
-    const counter = document.getElementById('counter');
     const playlistInput = document.getElementById('playlistUrl');
+    const playerContainer = document.getElementById('playerContainer');
+    const musicFrame = document.getElementById('musicFrame');
 
     let isPowerOn = false;
-    let isPlaying = false;
 
-    // 1. Al cargar la página, recupera automáticamente la última playlist utilizada
+    // Al cargar, recupera la playlist guardada de la memoria interna
     window.onload = () => {
-      const savedLink = localStorage.getItem('userPlaylist');
+      const savedLink = localStorage.getItem('userPlaylistStream');
       if (savedLink) {
         playlistInput.value = savedLink;
-        audio.src = savedLink;
+        processAndLoadLink(savedLink);
       }
     };
 
-    // Función para guardar el link de forma interna
+    // Procesa los links de Spotify, YT o SoundCloud para que no se bloqueen
+    function processAndLoadLink(rawLink) {
+      let embedUrl = "";
+
+      if (rawLink.includes("spotify.com")) {
+        // Convierte link normal de Spotify a link de reproductor incrustado
+        embedUrl = rawLink.replace("open.spotify.com/", "open.spotify.com/embed/");
+      } else if (rawLink.includes("youtube.com") || rawLink.includes("youtu.be")) {
+        let videoId = "";
+        if (rawLink.includes("watch?v=")) {
+          videoId = rawLink.split("v=")[1].split("&")[0];
+        } else if (rawLink.includes("youtu.be/")) {
+          videoId = rawLink.split("youtu.be/")[1].split("?")[0];
+        }
+        embedUrl = `https://www.youtube.com/embed/${videoId}`;
+      } else if (rawLink.includes("soundcloud.com")) {
+        embedUrl = `https://w.soundcloud.com/player/?url=${encodeURIComponent(rawLink)}&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true`;
+      } else {
+        embedUrl = rawLink; // Si ya es un embed directo
+      }
+
+      musicFrame.src = embedUrl;
+    }
+
     function loadPlaylist() {
       const link = playlistInput.value.trim();
       if (link) {
-        localStorage.setItem('userPlaylist', link); // Guarda en caché local
-        audio.src = link;
+        localStorage.setItem('userPlaylistStream', link); // Se guarda internamente
+        processAndLoadLink(link);
         if (isPowerOn) {
-          statusText.innerText = "TAPE READY";
+          statusText.innerText = "PLAYLIST READY";
         }
       }
     }
 
-    // 2. Encender o Apagar la Grabadora
     function togglePower() {
       isPowerOn = !isPowerOn;
       if (isPowerOn) {
         powerBtn.classList.add('on');
-        statusText.innerText = audio.src ? "TAPE READY" : "NO TAPE";
-        counter.innerText = "00:00";
+        statusText.innerText = playlistInput.value ? "PLAYLIST READY" : "NO PLAYLIST";
+        playerContainer.style.display = 'block'; // Muestra el reproductor nativo
       } else {
         powerBtn.classList.remove('on');
         statusText.innerText = "POWER OFF";
-        stopAnimations();
-        audio.pause();
-        isPlaying = false;
-        playBtn.classList.remove('active');
-        pauseBtn.classList.remove('active');
+        playerContainer.style.display = 'none'; // Apaga todo
+        spinCassette(false);
       }
     }
 
-    // 3. Reproducir, Pausar y Controles
-    function playAudio() {
-      if (!isPowerOn || !audio.src) return;
-      audio.play().then(() => {
-        isPlaying = true;
-        statusText.innerText = "PLAYING";
-        playBtn.classList.add('active');
-        pauseBtn.classList.remove('active');
-        // El casete empieza a girar físicamente
+    // Control visual del casete
+    function spinCassette(shouldSpin) {
+      if (!isPowerOn) return;
+      if (shouldSpin) {
         spindleL.style.animation = "spin 2s linear infinite";
         spindleR.style.animation = "spin 2s linear infinite";
-      }).catch(err => {
-        statusText.innerText = "AUDIO ERROR";
-      });
-    }
-
-    function pauseAudio() {
-      if (!isPowerOn || !isPlaying) return;
-      audio.pause();
-      isPlaying = false;
-      statusText.innerText = "PAUSED";
-      playBtn.classList.remove('active');
-      pauseBtn.classList.add('active');
-      stopAnimations();
-    }
-
-    function toggleMute() {
-      if (!isPowerOn) return;
-      audio.muted = !audio.muted;
-      if (audio.muted) {
-        muteBtn.classList.add('active');
+        statusText.innerText = "TAPE RUNNING";
+        playBtn.classList.add('active');
+        stopBtn.classList.remove('active');
       } else {
-        muteBtn.classList.remove('active');
+        spindleL.style.animation = "none";
+        spindleR.style.animation = "none";
+        statusText.innerText = "TAPE STOPPED";
+        playBtn.classList.remove('active');
+        stopBtn.classList.add('active');
       }
     }
-
-    function stopAnimations() {
-      spindleL.style.animation = "none";
-      spindleR.style.animation = "none";
-    }
-
-    // Actualizador del contador digital en vivo
-    audio.ontimeupdate = () => {
-      if (!isPowerOn) return;
-      const minutes = Math.floor(audio.currentTime / 60).toString().padStart(2, '0');
-      const seconds = Math.floor(audio.currentTime % 60).toString().padStart(2, '0');
-      counter.innerText = `${minutes}:${seconds}`;
-    };
   </script>
 </body>
 </html>
