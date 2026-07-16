@@ -3,38 +3,23 @@ html_content = """<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Retro Cassette Player Widget - Spotify Real</title>
+    <title>Retro Cassette - Spotify & Local MP3</title>
     <style>
         :root {
-            --bg-color: #1a1a1a;
-            --panel-bg: #2d2d2d;
-            --panel-border: #404040;
-            --text-color: #f0f0f0;
-            --accent-color: #ff9f1c;
-            --cassette-body: #1e1e1e;
-            --cassette-label: #f4ecd8;
+            --bg-color: #121212;
+            --panel-bg: #222222;
+            --panel-border: #3a3a3a;
+            --text-color: #e0e0e0;
+            --accent-color: #1db954; /* Verde Spotify retro-adaptado */
+            --cassette-body: #181818;
+            --cassette-label: #eadeca;
             --cassette-label-text: #222;
-            --wheel-color: #111;
-            --wheel-teeth: #ff9f1c;
-        }
-
-        [data-theme="light"] {
-            --bg-color: #e6e4dc;
-            --panel-bg: #d4cfb9;
-            --panel-border: #b8b194;
-            --text-color: #2b2b2b;
-            --accent-color: #d62828;
-            --cassette-body: #eae7db;
-            --cassette-label: #f4ecd8;
-            --cassette-label-text: #333;
-            --wheel-color: #ccc;
-            --wheel-teeth: #d62828;
+            --wheel-teeth: #1db954;
         }
 
         * {
             box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+            font-family: 'Courier New', Courier, monospace;
         }
 
         body {
@@ -43,6 +28,7 @@ html_content = """<!DOCTYPE html>
             margin: 0;
             padding: 20px;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
@@ -50,71 +36,46 @@ html_content = """<!DOCTYPE html>
 
         .widget-container {
             width: 100%;
-            max-width: 520px;
+            max-width: 480px;
             background: var(--panel-bg);
-            border: 4px solid var(--panel-border);
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 5px solid var(--panel-border);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.8);
             position: relative;
         }
 
-        /* Header */
+        /* Cabecera */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
+            border-bottom: 2px dashed var(--panel-border);
+            padding-bottom: 10px;
         }
 
         .title {
             font-size: 1.1rem;
-            font-weight: 800;
-            letter-spacing: 2px;
-            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 1px;
             color: var(--accent-color);
         }
 
-        .controls-top {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .theme-toggle, .radio-mode-btn, .bypass-off-btn {
-            background: var(--panel-border);
-            border: none;
-            color: var(--text-color);
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .bypass-off-btn {
-            background: #d62828;
-            color: white;
-            display: none;
-        }
-
-        /* CASSETTE visual */
+        /* Cuerpo del Casete */
         .cassette-player {
             width: 100%;
-            aspect-ratio: 1.65 / 1;
+            aspect-ratio: 1.6 / 1;
             background: var(--cassette-body);
             border-radius: 12px;
-            border: 5px solid #111;
+            border: 6px solid #0a0a0a;
             position: relative;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 5px 15px rgba(0,0,0,0.3);
             padding: 12px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.9);
         }
 
         .cassette-label {
@@ -122,126 +83,143 @@ html_content = """<!DOCTYPE html>
             color: var(--cassette-label-text);
             border-radius: 6px;
             padding: 8px;
-            border: 2px solid #333;
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.15);
+            height: 85%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border: 2px solid #000;
         }
 
         .label-header {
             display: flex;
             justify-content: space-between;
-            border-bottom: 1px solid #888;
-            padding-bottom: 2px;
-            font-size: 0.7rem;
-            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.75rem;
             font-weight: bold;
+            border-bottom: 1px solid #444;
+            padding-bottom: 2px;
         }
 
-        /* THE HOLE: El espacio donde se monta el Iframe real de Spotify */
-        .spotify-window-cutout {
+        /* Ventana Camuflada (Donde vive Spotify o los engranajes) */
+        .window-container {
             width: 100%;
-            height: 84px; /* Tamaño exacto para el reproductor compacto de Spotify */
+            height: 84px;
             background: #000;
             border: 3px solid #111;
             border-radius: 6px;
-            margin-top: 8px;
-            overflow: hidden;
             position: relative;
-            box-shadow: inset 0 3px 10px rgba(0,0,0,0.9);
+            overflow: hidden;
+            box-shadow: inset 0 3px 10px rgba(0,0,0,1);
         }
 
-        /* Iframe con interactividad real desbloqueada */
-        .spotify-interactive-iframe {
+        /* El Iframe de Spotify real, camuflado en el centro */
+        .spotify-frame-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 5;
+            transition: opacity 0.3s;
+        }
+
+        .spotify-frame-wrapper iframe {
             width: 100%;
             height: 80px;
             border: none;
-            background: transparent;
-            z-index: 10;
-            position: relative;
         }
 
-        /* Decoración de carretes pequeños en las esquinas inferiores del hueco */
-        .reel-decoration {
+        /* Engranajes de cinta físicos (Se muestran tras Spotify o con MP3 local) */
+        .gears-layer {
             position: absolute;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            border: 2px dashed var(--wheel-teeth);
-            background: var(--wheel-color);
-            top: 25px;
-            z-index: 1; /* Detrás del iframe si es opaco, visible en los bordes */
-            opacity: 0.4;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0 60px;
+            z-index: 2;
+            pointer-events: none;
         }
-        .reel-left-dec { left: 40px; }
-        .reel-right-dec { right: 40px; }
+
+        .reel {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 3px dashed var(--wheel-teeth);
+            background: #111;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .reel-center {
+            width: 12px;
+            height: 12px;
+            background: #000;
+            border-radius: 50%;
+        }
 
         @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
+
         .spinning {
-            animation: spin 2.5s linear infinite;
+            animation: spin 2s linear infinite;
         }
 
-        /* Trapezoid bottom */
         .cassette-bottom {
-            height: 14px;
-            width: 60%;
-            background: #111;
+            height: 10px;
+            width: 50%;
+            background: #0a0a0a;
             align-self: center;
             border-radius: 4px 4px 0 0;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-        }
-        .cassette-hole {
-            width: 6px;
-            height: 6px;
-            background: var(--panel-bg);
-            border-radius: 50%;
         }
 
-        /* Physical Deck Buttons */
+        /* Botonera de la Casetera */
         .button-deck {
             display: flex;
             justify-content: space-between;
-            background: #1a1a1a;
+            background: #151515;
             padding: 8px;
-            border-radius: 8px;
+            border-radius: 10px;
             border: 3px solid var(--panel-border);
-            box-shadow: inset 0 5px 10px rgba(0,0,0,0.5);
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .deck-btn {
             flex: 1;
-            margin: 0 3px;
-            height: 40px;
-            background: linear-gradient(to bottom, #444, #222);
+            margin: 0 4px;
+            height: 45px;
+            background: linear-gradient(to bottom, #333, #1a1a1a);
             border: 1px solid #111;
-            border-bottom: 3px solid #000;
-            border-radius: 4px;
-            color: #ccc;
-            font-size: 0.7rem;
+            border-bottom: 4px solid #000;
+            border-radius: 5px;
+            color: #aaa;
+            font-size: 0.75rem;
             font-weight: bold;
             cursor: pointer;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            box-shadow: 0 3px 5px rgba(0,0,0,0.4);
+            box-shadow: 0 3px 5px rgba(0,0,0,0.5);
         }
 
         .deck-btn:active, .deck-btn.active {
-            background: linear-gradient(to bottom, #222, #111);
-            border-bottom-width: 1px;
-            transform: translateY(2px);
+            background: linear-gradient(to bottom, #1a1a1a, #0a0a0a);
+            border-bottom: 1px solid #111;
+            transform: translateY(3px);
             color: var(--accent-color);
+            box-shadow: none;
         }
 
-        /* Config Panel */
-        .config-section {
-            background: rgba(0,0,0,0.15);
-            border-radius: 8px;
+        /* Panel de Configuración e Input de Archivos */
+        .config-area {
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
             padding: 15px;
             border: 1px solid var(--panel-border);
         }
@@ -256,10 +234,9 @@ html_content = """<!DOCTYPE html>
         label {
             display: block;
             font-size: 0.75rem;
-            font-weight: bold;
-            margin-bottom: 6px;
             text-transform: uppercase;
-            color: var(--text-color);
+            margin-bottom: 6px;
+            color: #888;
         }
 
         .text-input {
@@ -267,21 +244,37 @@ html_content = """<!DOCTYPE html>
             background: #111;
             border: 1px solid var(--panel-border);
             color: #fff;
-            padding: 8px 12px;
+            padding: 8px 10px;
             border-radius: 6px;
             font-size: 0.8rem;
         }
 
-        /* LED */
-        .led-indicator {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #555;
+        /* Zona de carga de MP3 local */
+        .file-zone {
+            border: 2px dashed var(--panel-border);
+            border-radius: 6px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 0.8rem;
+            background: rgba(0,0,0,0.1);
         }
-        .led-indicator.active {
-            background: #00ff00;
-            box-shadow: 0 0 8px #00ff00;
+        .file-zone:hover {
+            border-color: var(--accent-color);
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        .mode-indicator {
+            font-size: 0.7rem;
+            background: #1db954;
+            color: black;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            display: none;
         }
     </style>
 </head>
@@ -289,127 +282,207 @@ html_content = """<!DOCTYPE html>
 
 <div class="widget-container">
     <div class="header">
-        <span class="title">Retro Cassette</span>
-        <div class="controls-top">
-            <div class="led-indicator" id="status-led"></div>
-            <button class="radio-mode-btn" id="radio-mode-btn">📟 ANALOG MODE</button>
-            <button class="bypass-off-btn" id="bypass-off-btn">🛑 STOP BYPASS</button>
-            <button class="theme-toggle" id="theme-toggle-btn">🌗 TEMA</button>
-        </div>
+        <span class="title">TAPE DECK v2</span>
+        <span class="mode-indicator" id="mode-badge">MP3 LOCAL</span>
     </div>
 
-    <!-- CASSETTE -->
+    <!-- CASSETTE VISUAL -->
     <div class="cassette-player">
         <div class="cassette-label">
             <div class="label-header">
-                <span>STEREO CASSETTE</span>
-                <span>C-90</span>
+                <span>C-90 HIGH BIAS</span>
+                <span id="current-source-text">RETRO-CASSETTE</span>
             </div>
             
-            <!-- EL HUECO TRANSPARENTE: Contiene el Iframe real e interactivo de Spotify -->
-            <div class="spotify-window-cutout">
-                <!-- Efectos de engranajes por detrás -->
-                <div class="reel-decoration reel-left-dec" id="r-left"></div>
-                <div class="reel-decoration reel-right-dec" id="r-right"></div>
-                
-                <!-- Iframe compactado real sin superposiciones molestas -->
-                <iframe class="spotify-interactive-iframe" id="spotify-iframe" src="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+            <div class="window-container">
+                <!-- Capa de engranajes (Física y Visible detrás de Spotify o activa en MP3) -->
+                <div class="gears-layer">
+                    <div class="reel" id="reel-left"><div class="reel-center"></div></div>
+                    <div class="reel" id="reel-right"><div class="reel-center"></div></div>
+                </div>
+
+                <!-- Capa del Widget de Spotify (Se muestra si hay URL activa) -->
+                <div class="spotify-frame-wrapper" id="spotify-wrapper">
+                    <iframe id="spotify-iframe" src="" allow="encrypted-media"></iframe>
+                </div>
             </div>
         </div>
-
-        <div class="cassette-bottom">
-            <div class="cassette-hole"></div>
-            <div class="cassette-hole"></div>
-            <div class="cassette-hole"></div>
-        </div>
+        <div class="cassette-bottom"></div>
     </div>
 
-    <!-- BOTONES AUXILIARES -->
+    <!-- BOTONES FÍSICOS -->
     <div class="button-deck">
-        <button class="deck-btn" id="btn-play">▶️<br>PLAY</button>
-        <button class="deck-btn" id="btn-pause">⏸️<br>PAUSE</button>
-        <button class="deck-btn" id="btn-eject">⏏️<br>EJECT</button>
+        <button class="deck-btn" id="btn-play">▶<br>PLAY</button>
+        <button class="deck-btn" id="btn-pause">⏸<br>PAUSE</button>
+        <button class="deck-btn" id="btn-eject">⏏<br>EJECT</button>
     </div>
 
-    <!-- CONFIG -->
-    <div class="config-section">
+    <!-- CONTROLES E ENTRADA -->
+    <div class="config-area">
+        <!-- 1. Enlace de Spotify -->
         <div class="input-group">
-            <label>Pega tu canción o playlist de Spotify:</label>
-            <input type="text" class="text-input" id="spotify-link" placeholder="https://open.spotify.com/track/... o playlist" />
+            <label>1. URL de Spotify (Cargará en la ventana)</label>
+            <input type="text" class="text-input" id="spotify-link" placeholder="Pega una playlist o canción..." />
+        </div>
+
+        <!-- 2. Cargar Música Local (Reincorporado) -->
+        <div class="input-group">
+            <label>2. O arrastra música descargada (.MP3)</label>
+            <div class="file-zone" id="dropzone">
+                📁 Haz clic aquí para cargar tu archivo MP3
+            </div>
+            <input type="file" id="file-input" accept="audio/*">
         </div>
     </div>
 </div>
 
+<!-- Elemento de audio invisible para archivos locales -->
+<audio id="local-audio-player"></audio>
+
 <script>
+    let currentMode = 'spotify'; // 'spotify' o 'local'
     let isPlaying = false;
+
+    // Elementos DOM
+    const spotifyWrapper = document.getElementById('spotify-wrapper');
     const spotifyIframe = document.getElementById('spotify-iframe');
     const spotifyLink = document.getElementById('spotify-link');
-    const statusLed = document.getElementById('status-led');
-    const themeBtn = document.getElementById('theme-toggle-btn');
-    const radioBtn = document.getElementById('radio-mode-btn');
-    const bypassOffBtn = document.getElementById('bypass-off-btn');
-    const rLeft = document.getElementById('r-left');
-    const rRight = document.getElementById('r-right');
-    
+    const fileInput = document.getElementById('file-input');
+    const dropzone = document.getElementById('dropzone');
+    const localAudio = document.getElementById('local-audio-player');
+    const modeBadge = document.getElementById('mode-badge');
+    const currentSourceText = document.getElementById('current-source-text');
+
+    const reelLeft = document.getElementById('reel-left');
+    const reelRight = document.getElementById('reel-right');
+
     const btnPlay = document.getElementById('btn-play');
     const btnPause = document.getElementById('btn-pause');
     const btnEject = document.getElementById('btn-eject');
 
-    // Cargar enlace guardado
-    const savedLink = localStorage.getItem('retro_spotify_link') || 'https://open.spotify.com/embed/playlist/37i9dQZF1DX8XZgIasS662';
-    spotifyLink.value = savedLink.replace('/embed', '');
-    updateIframe(savedLink);
-
-    spotifyLink.addEventListener('input', (e) => {
-        let val = e.target.value;
-        if(val) {
-            localStorage.setItem('retro_spotify_link', val);
-            updateIframe(val);
+    // 1. CONTROL DE ARCHIVOS LOCALES (.MP3)
+    dropzone.addEventListener('click', () => fileInput.click());
+    
+    fileInput.addEventListener('change', (e) => {
+        if(e.target.files.length > 0) {
+            loadLocalFile(e.target.files[0]);
         }
     });
 
-    function updateIframe(url) {
-        let embedUrl = url;
-        if (url.includes('spotify.com') && !url.includes('/embed')) {
-            embedUrl = url.replace('open.spotify.com/', 'open.spotify.com/embed/');
-        }
-        spotifyIframe.src = embedUrl;
-        statusLed.className = "led-indicator active";
+    function loadLocalFile(file) {
+        currentMode = 'local';
+        
+        // Esconder Spotify por completo para revelar los engranajes girando limpios
+        spotifyWrapper.style.display = 'none';
+        modeBadge.style.display = 'inline-block';
+        modeBadge.textContent = 'CINTA LOCAL';
+        currentSourceText.textContent = file.name.substring(0, 20).toUpperCase();
+
+        const fileURL = URL.createObjectURL(file);
+        localAudio.src = fileURL;
+        
+        // Auto-reproducir localmente
+        playLocal();
     }
 
-    // El play del casete físico activa la animación de engranajes de fondo
-    btnPlay.addEventListener('click', () => {
+    // Funciones de reproducción local
+    function playLocal() {
+        localAudio.play();
         isPlaying = true;
-        rLeft.classList.add('spinning');
-        rRight.classList.add('spinning');
         btnPlay.classList.add('active');
         btnPause.classList.remove('active');
-        // Nota: Para iniciar la música, debes hacer clic directamente en el botón Play dentro de la ventana de Spotify.
-    });
+        reelLeft.classList.add('spinning');
+        reelRight.classList.add('spinning');
+    }
 
-    btnPause.addEventListener('click', () => {
+    function pauseLocal() {
+        localAudio.pause();
         isPlaying = false;
-        rLeft.classList.remove('spinning');
-        rRight.classList.remove('spinning');
         btnPlay.classList.remove('active');
         btnPause.classList.add('active');
+        reelLeft.classList.remove('spinning');
+        reelRight.classList.remove('spinning');
+    }
+
+    // 2. CONTROL INTEGRADO DE SPOTIFY
+    spotifyLink.addEventListener('input', (e) => {
+        let val = e.target.value;
+        if(val.includes('spotify.com')) {
+            currentMode = 'spotify';
+            spotifyWrapper.style.display = 'block';
+            modeBadge.style.display = 'inline-block';
+            modeBadge.textContent = 'SPOTIFY LINK';
+            modeBadge.style.background = '#1db954';
+            currentSourceText.textContent = "SPOTIFY ACTIVE";
+
+            // Convertir a Embed de forma automática
+            let embedUrl = val;
+            if (!val.includes('/embed')) {
+                embedUrl = val.replace('open.spotify.com/', 'open.spotify.com/embed/');
+            }
+            spotifyIframe.src = embedUrl;
+        }
     });
 
+    // TRUCO MAESTRO: Detectar el clic dentro de Spotify (Iframe) mediante desenfoque de foco.
+    // Como el usuario hace clic dentro de Spotify para darle Play, la página principal pierde el foco.
+    window.addEventListener('blur', () => {
+        if (currentMode === 'spotify') {
+            // El usuario interactuó con el iframe de Spotify, activamos los engranajes
+            setTimeout(() => {
+                isPlaying = true;
+                btnPlay.classList.add('active');
+                btnPause.classList.remove('active');
+                reelLeft.classList.add('spinning');
+                reelRight.classList.add('spinning');
+            }, 100);
+        }
+    });
+
+    // Si vuelven a enfocar la página y presionan físicamente Pausa abajo en la casetera
+    btnPause.addEventListener('click', () => {
+        if (currentMode === 'local') {
+            pauseLocal();
+        } else {
+            // En modo Spotify no podemos forzar la pausa por código, pero paramos la animación visual
+            isPlaying = false;
+            btnPlay.classList.remove('active');
+            btnPause.classList.add('active');
+            reelLeft.classList.remove('spinning');
+            reelRight.classList.remove('spinning');
+        }
+    });
+
+    btnPlay.addEventListener('click', () => {
+        if (currentMode === 'local') {
+            playLocal();
+        } else {
+            // En Spotify les recordamos que el clic real debe ser dentro del widget transparente
+            isPlaying = true;
+            btnPlay.classList.add('active');
+            btnPause.classList.remove('active');
+            reelLeft.classList.add('spinning');
+            reelRight.classList.add('spinning');
+        }
+    });
+
+    // 3. BOTÓN EJECT (Reinicia todo)
     btnEject.addEventListener('click', () => {
-        isPlaying = false;
-        rLeft.classList.remove('spinning');
-        rRight.classList.remove('spinning');
-        btnPlay.classList.remove('active');
-        btnPause.classList.remove('active');
+        localAudio.pause();
+        localAudio.src = '';
         spotifyIframe.src = '';
         spotifyLink.value = '';
-        localStorage.removeItem('retro_spotify_link');
+        spotifyWrapper.style.display = 'block'; // Volver al estado por defecto
+        modeBadge.style.display = 'none';
+        currentSourceText.textContent = "RETRO-CASSETTE";
+        
+        isPlaying = false;
+        btnPlay.classList.remove('active');
+        btnPause.classList.remove('active');
+        reelLeft.classList.remove('spinning');
+        reelRight.classList.remove('spinning');
     });
 
-    themeBtn.addEventListener('click', () => {
-        const theme = document.body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-        document.body.setAttribute('data-theme', theme);
-    });
 </script>
 </body>
 </html>
@@ -418,4 +491,4 @@ html_content = """<!DOCTYPE html>
 with open("index.html", "w", encoding="utf-8") as f:
     f.write(html_content)
 
-print("SUCCESS: index.html has been redesigned with the native interactive compact Spotify window.")
+print("¡Listo! index.html generado con soporte de MP3 local y camuflaje reactivo de Spotify.")
