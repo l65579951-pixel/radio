@@ -3,14 +3,14 @@ html_content = """<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Retro Cassette - Spotify & Local MP3</title>
+    <title>Retro Cassette - Spotify Real & Local MP3</title>
     <style>
         :root {
             --bg-color: #121212;
             --panel-bg: #222222;
             --panel-border: #3a3a3a;
             --text-color: #e0e0e0;
-            --accent-color: #1db954; /* Verde Spotify retro-adaptado */
+            --accent-color: #1db954;
             --cassette-body: #181818;
             --cassette-label: #eadeca;
             --cassette-label-text: #222;
@@ -28,7 +28,6 @@ html_content = """<!DOCTYPE html>
             margin: 0;
             padding: 20px;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
@@ -42,10 +41,8 @@ html_content = """<!DOCTYPE html>
             border-radius: 20px;
             padding: 20px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.8);
-            position: relative;
         }
 
-        /* Cabecera */
         .header {
             display: flex;
             justify-content: space-between;
@@ -58,11 +55,10 @@ html_content = """<!DOCTYPE html>
         .title {
             font-size: 1.1rem;
             font-weight: bold;
-            letter-spacing: 1px;
             color: var(--accent-color);
         }
 
-        /* Cuerpo del Casete */
+        /* CASSETTE VISUAL */
         .cassette-player {
             width: 100%;
             aspect-ratio: 1.6 / 1;
@@ -99,7 +95,7 @@ html_content = """<!DOCTYPE html>
             padding-bottom: 2px;
         }
 
-        /* Ventana Camuflada (Donde vive Spotify o los engranajes) */
+        /* EL HUECO: Aquí encaja exactamente el reproductor de Spotify para que puedas GUARDAR y dar PLAY */
         .window-container {
             width: 100%;
             height: 84px;
@@ -111,7 +107,7 @@ html_content = """<!DOCTYPE html>
             box-shadow: inset 0 3px 10px rgba(0,0,0,1);
         }
 
-        /* El Iframe de Spotify real, camuflado en el centro */
+        /* Capa de Spotify real (Sin camuflajes invisibles que rompan los clics) */
         .spotify-frame-wrapper {
             position: absolute;
             top: 0;
@@ -119,7 +115,6 @@ html_content = """<!DOCTYPE html>
             width: 100%;
             height: 100%;
             z-index: 5;
-            transition: opacity 0.3s;
         }
 
         .spotify-frame-wrapper iframe {
@@ -128,7 +123,7 @@ html_content = """<!DOCTYPE html>
             border: none;
         }
 
-        /* Engranajes de cinta físicos (Se muestran tras Spotify o con MP3 local) */
+        /* Capa de engranajes retro (Detrás de Spotify o visible si usas MP3 local) */
         .gears-layer {
             position: absolute;
             top: 0;
@@ -140,7 +135,6 @@ html_content = """<!DOCTYPE html>
             align-items: center;
             padding: 0 60px;
             z-index: 2;
-            pointer-events: none;
         }
 
         .reel {
@@ -178,7 +172,7 @@ html_content = """<!DOCTYPE html>
             border-radius: 4px 4px 0 0;
         }
 
-        /* Botonera de la Casetera */
+        /* BOTONES DE LA CASETERA */
         .button-deck {
             display: flex;
             justify-content: space-between;
@@ -216,7 +210,7 @@ html_content = """<!DOCTYPE html>
             box-shadow: none;
         }
 
-        /* Panel de Configuración e Input de Archivos */
+        /* CONFIGURACIÓN Y CONTROLES */
         .config-area {
             background: rgba(0,0,0,0.2);
             border-radius: 10px;
@@ -249,7 +243,6 @@ html_content = """<!DOCTYPE html>
             font-size: 0.8rem;
         }
 
-        /* Zona de carga de MP3 local */
         .file-zone {
             border: 2px dashed var(--panel-border);
             border-radius: 6px;
@@ -269,7 +262,7 @@ html_content = """<!DOCTYPE html>
 
         .mode-indicator {
             font-size: 0.7rem;
-            background: #1db954;
+            background: var(--accent-color);
             color: black;
             padding: 2px 6px;
             border-radius: 4px;
@@ -282,26 +275,26 @@ html_content = """<!DOCTYPE html>
 
 <div class="widget-container">
     <div class="header">
-        <span class="title">TAPE DECK v2</span>
-        <span class="mode-indicator" id="mode-badge">MP3 LOCAL</span>
+        <span class="title">TAPE DECK v3</span>
+        <span class="mode-indicator" id="mode-badge">CINTA LOCAL</span>
     </div>
 
-    <!-- CASSETTE VISUAL -->
+    <!-- CASSETTE -->
     <div class="cassette-player">
         <div class="cassette-label">
             <div class="label-header">
                 <span>C-90 HIGH BIAS</span>
-                <span id="current-source-text">RETRO-CASSETTE</span>
+                <span id="current-source-text">SPOTIFY / MP3</span>
             </div>
             
             <div class="window-container">
-                <!-- Capa de engranajes (Física y Visible detrás de Spotify o activa en MP3) -->
+                <!-- Engranajes Retro (Atrás) -->
                 <div class="gears-layer">
                     <div class="reel" id="reel-left"><div class="reel-center"></div></div>
                     <div class="reel" id="reel-right"><div class="reel-center"></div></div>
                 </div>
 
-                <!-- Capa del Widget de Spotify (Se muestra si hay URL activa) -->
+                <!-- Iframe de Spotify de 80px (Adelante y totalmente funcional) -->
                 <div class="spotify-frame-wrapper" id="spotify-wrapper">
                     <iframe id="spotify-iframe" src="" allow="encrypted-media"></iframe>
                 </div>
@@ -310,40 +303,39 @@ html_content = """<!DOCTYPE html>
         <div class="cassette-bottom"></div>
     </div>
 
-    <!-- BOTONES FÍSICOS -->
+    <!-- BOTONES FÍSICOS DE CONTROL -->
     <div class="button-deck">
         <button class="deck-btn" id="btn-play">▶<br>PLAY</button>
         <button class="deck-btn" id="btn-pause">⏸<br>PAUSE</button>
         <button class="deck-btn" id="btn-eject">⏏<br>EJECT</button>
     </div>
 
-    <!-- CONTROLES E ENTRADA -->
+    <!-- ENTRADAS -->
     <div class="config-area">
         <!-- 1. Enlace de Spotify -->
         <div class="input-group">
-            <label>1. URL de Spotify (Cargará en la ventana)</label>
-            <input type="text" class="text-input" id="spotify-link" placeholder="Pega una playlist o canción..." />
+            <label>1. URL de Spotify (Carga el widget interactivo)</label>
+            <input type="text" class="text-input" id="spotify-link" placeholder="Pega tu playlist o canción aquí..." />
         </div>
 
-        <!-- 2. Cargar Música Local (Reincorporado) -->
+        <!-- 2. Cargar Música Local (.MP3) -->
         <div class="input-group">
-            <label>2. O arrastra música descargada (.MP3)</label>
+            <label>2. Cargar Archivo de Audio Local</label>
             <div class="file-zone" id="dropzone">
-                📁 Haz clic aquí para cargar tu archivo MP3
+                📁 Haz clic aquí para cargar tu archivo MP3 / WAV
             </div>
             <input type="file" id="file-input" accept="audio/*">
         </div>
     </div>
 </div>
 
-<!-- Elemento de audio invisible para archivos locales -->
 <audio id="local-audio-player"></audio>
 
 <script>
-    let currentMode = 'spotify'; // 'spotify' o 'local'
+    let currentMode = 'spotify';
     let isPlaying = false;
 
-    // Elementos DOM
+    // DOM
     const spotifyWrapper = document.getElementById('spotify-wrapper');
     const spotifyIframe = document.getElementById('spotify-iframe');
     const spotifyLink = document.getElementById('spotify-link');
@@ -360,9 +352,12 @@ html_content = """<!DOCTYPE html>
     const btnPause = document.getElementById('btn-pause');
     const btnEject = document.getElementById('btn-eject');
 
-    // 1. CONTROL DE ARCHIVOS LOCALES (.MP3)
+    // Cargar Playlist por Defecto para que no aparezca vacío
+    const defaultSpotify = "https://open.spotify.com/embed/playlist/37i9dQZF1DX8XZgIasS662";
+    spotifyIframe.src = defaultSpotify;
+
+    // 1. CARGAR ARCHIVO LOCAL (MP3)
     dropzone.addEventListener('click', () => fileInput.click());
-    
     fileInput.addEventListener('change', (e) => {
         if(e.target.files.length > 0) {
             loadLocalFile(e.target.files[0]);
@@ -371,21 +366,16 @@ html_content = """<!DOCTYPE html>
 
     function loadLocalFile(file) {
         currentMode = 'local';
-        
-        // Esconder Spotify por completo para revelar los engranajes girando limpios
-        spotifyWrapper.style.display = 'none';
+        spotifyWrapper.style.display = 'none'; // Ocultamos Spotify para ver los engranajes limpios
         modeBadge.style.display = 'inline-block';
         modeBadge.textContent = 'CINTA LOCAL';
-        currentSourceText.textContent = file.name.substring(0, 20).toUpperCase();
+        currentSourceText.textContent = file.name.substring(0, 18).toUpperCase();
 
         const fileURL = URL.createObjectURL(file);
         localAudio.src = fileURL;
-        
-        // Auto-reproducir localmente
         playLocal();
     }
 
-    // Funciones de reproducción local
     function playLocal() {
         localAudio.play();
         isPlaying = true;
@@ -404,18 +394,16 @@ html_content = """<!DOCTYPE html>
         reelRight.classList.remove('spinning');
     }
 
-    // 2. CONTROL INTEGRADO DE SPOTIFY
+    // 2. SPOTIFY LINK INPUT
     spotifyLink.addEventListener('input', (e) => {
         let val = e.target.value;
         if(val.includes('spotify.com')) {
             currentMode = 'spotify';
             spotifyWrapper.style.display = 'block';
             modeBadge.style.display = 'inline-block';
-            modeBadge.textContent = 'SPOTIFY LINK';
-            modeBadge.style.background = '#1db954';
-            currentSourceText.textContent = "SPOTIFY ACTIVE";
+            modeBadge.textContent = 'SPOTIFY';
+            currentSourceText.textContent = "C-90 SPOTIFY";
 
-            // Convertir a Embed de forma automática
             let embedUrl = val;
             if (!val.includes('/embed')) {
                 embedUrl = val.replace('open.spotify.com/', 'open.spotify.com/embed/');
@@ -424,11 +412,10 @@ html_content = """<!DOCTYPE html>
         }
     });
 
-    // TRUCO MAESTRO: Detectar el clic dentro de Spotify (Iframe) mediante desenfoque de foco.
-    // Como el usuario hace clic dentro de Spotify para darle Play, la página principal pierde el foco.
+    // SISTEMA REACTIVO DE ENGRANAJES PARA SPOTIFY
+    // Detectamos la interacción con el Iframe (el usuario le dio Play o Guardar dentro de Spotify)
     window.addEventListener('blur', () => {
         if (currentMode === 'spotify') {
-            // El usuario interactuó con el iframe de Spotify, activamos los engranajes
             setTimeout(() => {
                 isPlaying = true;
                 btnPlay.classList.add('active');
@@ -439,25 +426,12 @@ html_content = """<!DOCTYPE html>
         }
     });
 
-    // Si vuelven a enfocar la página y presionan físicamente Pausa abajo en la casetera
-    btnPause.addEventListener('click', () => {
-        if (currentMode === 'local') {
-            pauseLocal();
-        } else {
-            // En modo Spotify no podemos forzar la pausa por código, pero paramos la animación visual
-            isPlaying = false;
-            btnPlay.classList.remove('active');
-            btnPause.classList.add('active');
-            reelLeft.classList.remove('spinning');
-            reelRight.classList.remove('spinning');
-        }
-    });
-
+    // BOTONES FÍSICOS DE CONTROL
     btnPlay.addEventListener('click', () => {
         if (currentMode === 'local') {
             playLocal();
         } else {
-            // En Spotify les recordamos que el clic real debe ser dentro del widget transparente
+            // Animación para Spotify (el audio se inicia con el play de Spotify adentro)
             isPlaying = true;
             btnPlay.classList.add('active');
             btnPause.classList.remove('active');
@@ -466,15 +440,26 @@ html_content = """<!DOCTYPE html>
         }
     });
 
-    // 3. BOTÓN EJECT (Reinicia todo)
+    btnPause.addEventListener('click', () => {
+        if (currentMode === 'local') {
+            pauseLocal();
+        } else {
+            isPlaying = false;
+            btnPlay.classList.remove('active');
+            btnPause.classList.add('active');
+            reelLeft.classList.remove('spinning');
+            reelRight.classList.remove('spinning');
+        }
+    });
+
     btnEject.addEventListener('click', () => {
         localAudio.pause();
         localAudio.src = '';
-        spotifyIframe.src = '';
+        spotifyIframe.src = defaultSpotify;
         spotifyLink.value = '';
-        spotifyWrapper.style.display = 'block'; // Volver al estado por defecto
+        spotifyWrapper.style.display = 'block';
         modeBadge.style.display = 'none';
-        currentSourceText.textContent = "RETRO-CASSETTE";
+        currentSourceText.textContent = "SPOTIFY / MP3";
         
         isPlaying = false;
         btnPlay.classList.remove('active');
@@ -482,7 +467,6 @@ html_content = """<!DOCTYPE html>
         reelLeft.classList.remove('spinning');
         reelRight.classList.remove('spinning');
     });
-
 </script>
 </body>
 </html>
@@ -491,4 +475,4 @@ html_content = """<!DOCTYPE html>
 with open("index.html", "w", encoding="utf-8") as f:
     f.write(html_content)
 
-print("¡Listo! index.html generado con soporte de MP3 local y camuflaje reactivo de Spotify.")
+print("index.html actualizado con el reproductor interactivo real de Spotify y soporte de archivos locales.")
