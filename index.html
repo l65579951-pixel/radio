@@ -1,451 +1,139 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Casetera Spotify Inteligente</title>
-    <style>
-        :root {
-            --bg-color: #f4ebd9;
-            --panel-color: #2a2a2a;
-            --deck-color: #121212;
-            --tape-body: #3e322a;
-            --label-color: #e6e6e6;
-            --text-color: #333;
-            --widget-bg: #ffffff;
-            --input-border: #ccc;
-        }
+// Referencias a los elementos del DOM (Asegúrate de que coincidan con tus IDs de HTML)
+const playBtn = document.getElementById('btn-play');
+const stopBtn = document.getElementById('btn-stop');
+const powerLed = document.getElementById('power-led');
+const leftReel = document.getElementById('left-reel');
+const rightReel = document.getElementById('right-reel');
+const trackName = document.getElementById('track-name');
+const urlInput = document.getElementById('spotify-url');
 
-        [data-theme="dark"] {
-            --bg-color: #121212;
-            --panel-color: #1a1a1a;
-            --deck-color: #080808;
-            --tape-body: #251e1a;
-            --label-color: #cccccc;
-            --text-color: #f1f1f1;
-            --widget-bg: #1e1e1e;
-            --input-border: #333;
-        }
+let spotifyController = null;
+let isPlaying = false;
+const defaultPlaylist = "https://open.spotify.com/playlist/37i9dQZF1DX8Uebhn9vU6P";
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Courier New', Courier, monospace;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            transition: background-color 0.3s;
-        }
+window.onload = () => {
+    // Cargar tema guardado
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    if (urlInput) urlInput.value = defaultPlaylist;
+};
 
-        .container {
-            width: 100%;
-            max-width: 420px;
-            background: var(--widget-bg);
-            padding: 22px;
-            border-radius: 20px;
-            box-shadow: 0 12px 40px rgba(0,0,0,0.18);
-            box-sizing: border-box;
-        }
+// 1. Inicialización ultra-segura de la API de Spotify
+window.onSpotifyIframeApiReady = (IFrameAPI) => {
+    const element = document.getElementById('spotify-embed-container');
+    if (!element) {
+        console.error("Error: No se encontró el contenedor '#spotify-embed-container' en tu HTML.");
+        return;
+    }
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .setup-panel {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .input-row {
-            display: flex;
-            gap: 8px;
-        }
-
-        input[type="text"] {
-            flex: 1;
-            padding: 10px;
-            border: 2px solid var(--input-border);
-            border-radius: 8px;
-            background: var(--widget-bg);
-            color: var(--text-color);
-            font-size: 0.85rem;
-        }
-
-        .btn-action {
-            background-color: #1DB954; /* Verde Spotify */
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 0.85rem;
-            transition: background 0.2s;
-        }
-
-        .btn-action:hover {
-            background-color: #1ed760;
-        }
-
-        .track-info {
-            font-size: 0.75rem;
-            color: var(--text-color);
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            margin-bottom: 10px;
-            font-weight: bold;
-            border: 1px dashed var(--input-border);
-            padding: 6px;
-            border-radius: 6px;
-        }
-
-        /* GRABADORA DE CASETE */
-        .cassette-player {
-            background-color: var(--panel-color);
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.9), 0 8px 20px rgba(0,0,0,0.3);
-            position: relative;
-        }
-
-        .tape-deck {
-            background-color: var(--deck-color);
-            height: 180px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 4px solid #333;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
-            overflow: hidden;
-        }
-
-        .cassette {
-            width: 260px;
-            height: 150px;
-            background-color: var(--tape-body);
-            border-radius: 6px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            padding: 8px;
-            box-sizing: border-box;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.6);
-            position: relative;
-        }
-
-        .cassette-label {
-            background-color: var(--label-color);
-            height: 100px;
-            border-radius: 4px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: center;
-            padding: 6px;
-            box-sizing: border-box;
-            border-bottom: 3px solid #b5b5b5;
-            position: relative;
-        }
-
-        .reels-container {
-            display: flex;
-            justify-content: space-around;
-            width: 100%;
-            align-items: center;
-            margin-top: 5px;
-        }
-
-        .reel {
-            width: 30px;
-            height: 30px;
-            background-color: #111;
-            border-radius: 50%;
-            border: 3px dashed #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .reel::after {
-            content: '';
-            width: 10px;
-            height: 10px;
-            background-color: var(--deck-color);
-            border-radius: 50%;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .spinning {
-            animation: spin 2.5s linear infinite;
-        }
-
-        /* EL CAMUFLAJE: Contenedor del IFrame de Spotify */
-        .spotify-mask {
-            width: 100%;
-            height: 80px;
-            border-radius: 4px;
-            overflow: hidden;
-            background: #000;
-            margin-top: 5px;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
-            border: 2px solid #222;
-        }
-
-        /* CONTROLES FÍSICOS */
-        .controls-row {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            margin-top: 25px;
-            background-color: #222;
-            padding: 12px 10px;
-            border-radius: 8px;
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
-        }
-
-        .btn-mechanic {
-            width: 80px;
-            height: 50px;
-            background: linear-gradient(180deg, #666, #333);
-            border: 1px solid #111;
-            border-radius: 6px;
-            color: #eee;
-            font-size: 0.7rem;
-            font-weight: bold;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 0px #000;
-            text-shadow: 1px 1px 1px #000;
-            cursor: pointer;
-            user-select: none;
-            transition: transform 0.1s, box-shadow 0.1s;
-        }
-
-        .btn-mechanic:active {
-            transform: translateY(2px);
-            box-shadow: 0 2px 0px #000;
-        }
-
-        .btn-mechanic.active {
-            transform: translateY(4px);
-            box-shadow: 0 0px 0px #000;
-            background: linear-gradient(180deg, #222, #111);
-            color: #ff9f43;
-        }
-        
-        .btn-mechanic.active-play {
-            color: #1DB954;
-        }
-
-        .status-led {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background-color: #444;
-            transition: background-color 0.2s, box-shadow 0.2s;
-        }
-
-        .status-led.active {
-            background-color: #1DB954;
-            box-shadow: 0 0 8px #1DB954;
-        }
-    </style>
-    <!-- Cargamos la API de Embeds oficial de Spotify -->
-    <script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
-</head>
-<body>
-
-<div class="container">
-    <div class="header">
-        <h3 style="margin: 0; letter-spacing: 1px; font-size: 1rem;">SPOTIFY TAPE DECK</h3>
-        <div style="display: flex; align-items: center; gap: 8px;">
-            <div class="status-led" id="power-led"></div>
-            <button onclick="toggleTheme()" style="background:none; border:1px solid var(--text-color); color:var(--text-color); font-family:inherit; border-radius:12px; cursor:pointer; padding:2px 10px; font-size: 0.8rem;">TEMA</button>
-        </div>
-    </div>
-
-    <!-- PANEL DE CONTROL DEL ENLACE -->
-    <div class="setup-panel">
-        <div class="input-row">
-            <input type="text" id="spotify-url" placeholder="Pega un enlace de Playlist o Álbum de Spotify...">
-            <button class="btn-action" onclick="loadSpotifyUri()">Sintonizar</button>
-        </div>
-        <div class="track-info" id="track-name">Inserta una playlist para empezar</div>
-    </div>
-
-    <!-- LA CASETERA -->
-    <div class="cassette-player">
-        
-        <!-- Casete visual -->
-        <div class="tape-deck">
-            <div class="cassette">
-                <div class="cassette-label">
-                    <!-- Engranajes superiores -->
-                    <div class="reels-container">
-                        <div class="reel" id="left-reel"></div>
-                        <div style="font-size: 0.6rem; font-weight: bold; color: #333;">STEREO</div>
-                        <div class="reel" id="right-reel"></div>
-                    </div>
-                    
-                    <!-- MASCARA DE SPOTIFY (El reproductor real camuflado en la ventana) -->
-                    <div class="spotify-mask">
-                        <div id="spotify-embed-container"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- BOTONES MECÁNICOS DE LA CASETERA (Controladores) -->
-        <div class="controls-row">
-            <div class="btn-mechanic" id="btn-stop" onclick="pressStop()">
-                <span>⏹</span><span>STOP</span>
-            </div>
-            <div class="btn-mechanic" id="btn-play" onclick="pressPlay()">
-                <span>▶/⏸</span><span>PLAY</span>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-    const playBtn = document.getElementById('btn-play');
-    const stopBtn = document.getElementById('btn-stop');
-    const powerLed = document.getElementById('power-led');
-    const leftReel = document.getElementById('left-reel');
-    const rightReel = document.getElementById('right-reel');
-    const trackName = document.getElementById('track-name');
-    const urlInput = document.getElementById('spotify-url');
-
-    let spotifyController = null;
-    let isPlaying = false;
-
-    // Inicializar con una playlist de ejemplo estable (Lo-Fi Beats de Spotify)
-    const defaultPlaylist = "https://open.spotify.com/playlist/37i9dQZF1DX8Uebhn9vU6P";
-
-    window.onload = () => {
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        urlInput.value = defaultPlaylist;
+    const options = {
+        width: '100%',
+        height: '80', // Altura del widget compacto de Spotify
+        uri: getSpotifyUri(defaultPlaylist)
     };
-
-    // 1. Inicializar la API de Spotify cuando esté lista
-    window.onSpotifyIframeApiReady = (IFrameAPI) => {
-        const element = document.getElementById('spotify-embed-container');
-        const options = {
-            width: '100%',
-            height: '80', // Altura compacta ideal para calzar en la ventanita del casete
-            uri: getSpotifyUri(defaultPlaylist)
-        };
+    
+    IFrameAPI.createController(element, options, (EmbedController) => {
+        spotifyController = EmbedController;
+        if (trackName) trackName.textContent = "Cinta lista. ¡Dale a PLAY!";
         
-        IFrameAPI.createController(element, options, (EmbedController) => {
-            spotifyController = EmbedController;
-            trackName.textContent = "Cinta cargada. ¡Dale a PLAY!";
+        // Escucha de eventos nativos de Spotify
+        spotifyController.on('playback_update', e => {
+            if (!e || !e.data) return;
             
-            // Escuchar cambios de estado desde el reproductor nativo
-            spotifyController.on('playback_update', e => {
-                const duration = e.data.duration;
-                const position = e.data.position;
-                isPlaying = !e.data.isPaused;
-                
-                setVisualState(isPlaying);
-                
+            const duration = e.data.duration || 0;
+            const position = e.data.position || 0;
+            isPlaying = !e.data.isPaused;
+            
+            setVisualState(isPlaying);
+            
+            if (trackName) {
                 if (isPlaying) {
-                    trackName.textContent = `Reproduciendo... (${formatTime(position)} / ${formatTime(duration)})`;
+                    trackName.textContent = duration > 0 
+                        ? `Sonando... (${formatTime(position)} / ${formatTime(duration)})`
+                        : "Reproduciendo...";
                 } else {
-                    trackName.textContent = "En pausa";
+                    trackName.textContent = "Cinta pausada";
                 }
-            });
+            }
         });
-    };
+    });
+};
 
-    // 2. Extraer el URI de Spotify del enlace pegado
-    function getSpotifyUri(url) {
-        try {
-            const cleanUrl = url.split('?')[0]; // Limpiar parámetros de tracking
-            const parts = cleanUrl.replace("https://open.spotify.com/", "").split("/");
-            const type = parts[0]; // playlist, album, track, artist
-            const id = parts[1];
-            return `spotify:${type}:${id}`;
-        } catch (e) {
-            alert("Enlace de Spotify inválido. Asegúrate de copiar el enlace de una canción, álbum o playlist.");
-            return `spotify:playlist:37i9dQZF1DX8Uebhn9vU6P`;
+// 2. Extractor de URIs a prueba de errores
+function getSpotifyUri(url) {
+    if (!url) return `spotify:playlist:37i9dQZF1DX8Uebhn9vU6P`;
+    try {
+        const match = url.match(/(track|playlist|album|artist)\/([a-zA-Z0-9]+)/);
+        if (match && match[1] && match[2]) {
+            return `spotify:${match[1]}:${match[2]}`;
         }
+    } catch (e) {
+        console.warn("Error parseando la URL, usando playlist por defecto.", e);
     }
+    return `spotify:playlist:37i9dQZF1DX8Uebhn9vU6P`; 
+}
 
-    // 3. Cargar la nueva playlist/canción en caliente
-    function loadSpotifyUri() {
-        const url = urlInput.value.trim();
-        if (url && spotifyController) {
-            const uri = getSpotifyUri(url);
-            spotifyController.loadUri(uri);
-            trackName.textContent = "Cinta cambiada. ¡Dale a PLAY!";
-            setVisualState(false);
-        }
+// 3. Cargar nueva cinta en caliente
+function loadSpotifyUri() {
+    if (!spotifyController) {
+        alert("Espera a que el reproductor cargue por completo.");
+        return;
     }
+    const url = urlInput ? urlInput.value.trim() : "";
+    const uri = getSpotifyUri(url);
+    
+    spotifyController.loadUri(uri);
+    setVisualState(false);
+    if (trackName) trackName.textContent = "Cargando nueva cinta...";
+}
 
-    // 4. Acciones de los botones FÍSICOS que controlan a Spotify
-    function pressPlay() {
-        if (spotifyController) {
-            spotifyController.togglePlay();
-        }
+// 4. Controles físicos (con condicionales para evitar que rompan la página)
+function pressPlay() {
+    if (!spotifyController) {
+        console.warn("El controlador de Spotify no está listo.");
+        return;
     }
-
-    function pressStop() {
-        if (spotifyController) {
-            // La API de embeds no tiene "Stop" real, así que pausamos y reiniciamos visualmente
-            spotifyController.pause();
-            setVisualState(false);
-        }
+    // Usamos métodos explícitos para esquivar incompatibilidades del viejo togglePlay()
+    if (isPlaying) {
+        spotifyController.pause();
+    } else {
+        spotifyController.play();
     }
+}
 
-    // 5. Animaciones y sincronía visual
-    function setVisualState(playing) {
-        if (playing) {
-            playBtn.classList.add('active', 'active-play');
-            stopBtn.classList.remove('active');
-            powerLed.classList.add('active');
-            leftReel.classList.add('spinning');
-            rightReel.classList.add('spinning');
-        } else {
-            playBtn.classList.remove('active', 'active-play');
-            leftReel.classList.remove('spinning');
-            rightReel.classList.remove('spinning');
-            powerLed.classList.remove('active');
-        }
+function pressStop() {
+    if (!spotifyController) return;
+    
+    spotifyController.pause();
+    setVisualState(false);
+    
+    // Animación mecánica del botón STOP
+    if (stopBtn) {
+        stopBtn.classList.add('active');
+        setTimeout(() => stopBtn.classList.remove('active'), 250);
     }
+}
 
-    // Utilidades
-    function formatTime(ms) {
-        const minutes = Math.floor(ms / 60000);
-        const seconds = ((ms % 60000) / 1000).toFixed(0);
-        return minutes + ":" + (seconds < 10 ? '0' : '') + seconds;
+// 5. Renderizador de estados visuales (CSS classes)
+function setVisualState(playing) {
+    if (playing) {
+        if (playBtn) playBtn.classList.add('active', 'active-play');
+        if (stopBtn) stopBtn.classList.remove('active');
+        if (powerLed) powerLed.classList.add('active');
+        if (leftReel) leftReel.classList.add('spinning');
+        if (rightReel) rightReel.classList.add('spinning');
+    } else {
+        if (playBtn) playBtn.classList.remove('active', 'active-play');
+        if (powerLed) powerLed.classList.remove('active');
+        if (leftReel) leftReel.classList.remove('spinning');
+        if (rightReel) rightReel.classList.remove('spinning');
     }
+}
 
-    function toggleTheme() {
-        const currentTheme = document.documentElement.getAttribute('data-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-    }
-</script>
-
-</body>
-</html>
+// Formateador de minutos y segundos
+function formatTime(ms) {
+    if (isNaN(ms) || ms < 0) return "0:00";
+    const minutes = Math.floor(ms / 60000);
+    const seconds = Math.floor((ms % 60000) / 1000);
+    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+}
