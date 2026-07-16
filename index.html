@@ -1,160 +1,60 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Retro Cassette Player - Notion Edition</title>
-    <style>
-        /* ... (MANTENGO TODO TU CSS IGUAL) ... */
-        :root { --bg-color: #ffffff; --container-bg: #ffffff; --text-color: #37352f; --accent-gold: #dfab01; --border-color: #e9e9e6; --visor-bg: #f1f1ef; --visor-text: #37352f; --drawer-bg: rgba(255, 255, 255, 0.95); --led-on: #eb5757; --led-off: #472424; }
-        [data-theme="dark"] { --bg-color: #191919; --container-bg: #191919; --text-color: #9b9a97; --accent-gold: #ffd33d; --border-color: #2a2a2a; --visor-bg: #202020; --visor-text: #ebffff; --drawer-bg: rgba(32, 32, 32, 0.95); --led-on: #ff7373; --led-off: #3d1d1d; }
-        body { background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif; transition: background-color 0.2s ease, color 0.2s ease; overflow: hidden; }
-        .player-wrapper { position: relative; width: 100%; max-width: 480px; display: flex; flex-direction: column; align-items: center; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; background: var(--container-bg); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .header-controls { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 10px; gap: 8px; }
-        .theme-toggle { background: var(--visor-bg); border: 1px solid var(--border-color); color: var(--text-color); padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 0.75rem; font-weight: 500; transition: background 0.2s; }
-        .theme-toggle:hover { background: var(--border-color); }
-        .visor-texto { background-color: var(--visor-bg); color: var(--visor-text); font-family: monospace; font-size: 0.75rem; font-weight: 600; padding: 6px 12px; border-radius: 5px; border: 1px solid var(--border-color); text-align: center; flex-grow: 1; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .grabadora-container { position: relative; width: 100%; aspect-ratio: 1.34 / 1; background-image: url('https://i.postimg.cc/ncXV4Sc5/grabadora-roja-removebg-preview.png'); background-size: contain; background-repeat: no-repeat; background-position: center; }
-        .led-indicator { position: absolute; top: 45.5%; left: 14%; width: 8px; height: 8px; border-radius: 50%; background-color: var(--led-off); box-shadow: 0 0 2px rgba(0,0,0,0.5); transition: background-color 0.2s; z-index: 5; }
-        .led-indicator.active { background-color: var(--led-on); box-shadow: 0 0 6px var(--led-on); }
-        .compartment-mask { position: absolute; top: 47.8%; left: 36.5%; width: 27%; height: 18.2%; overflow: hidden; z-index: 2; }
-        .casete-asset { position: absolute; width: 100%; height: 100%; background-image: url('https://i.postimg.cc/9fWvpztK/casette-rojo-removebg-preview.png'); background-size: contain; background-repeat: no-repeat; background-position: center; transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.5s; transform: translateY(115%); opacity: 0; z-index: 3; }
-        .casete-asset.inserted { transform: translateY(0%); opacity: 1; }
-        .tape-window-overlay { position: absolute; top: 36%; left: 20%; width: 60%; height: 30%; display: flex; justify-content: space-around; align-items: center; pointer-events: none; z-index: 4; }
-        .reel-overlay { width: 13px; height: 13px; border-radius: 50%; border: 3px dashed #ffffff; background: rgba(0, 0, 0, 0.6); transition: transform 0.1s linear; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes spin-fast { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes spin-reverse { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
-        .spinning { animation: spin 2s linear infinite; }
-        .spinning-fast { animation: spin-fast 0.6s linear infinite; }
-        .spinning-reverse { animation: spin-reverse 0.6s linear infinite; }
-        .mapeo-botones { position: absolute; top: 44.2%; left: 24.8%; width: 50.4%; height: 6.5%; display: flex; justify-content: space-between; align-items: center; z-index: 10; }
-        .btn-fisico { width: 24px; height: 24px; border-radius: 50%; background: rgba(255, 255, 255, 0.01); border: 1px solid transparent; cursor: pointer; transition: background 0.2s; }
-        .btn-fisico:hover { background: rgba(255, 255, 255, 0.2); }
-        .btn-fisico:active, .btn-fisico.active { background: rgba(255, 255, 255, 0.4); }
-        .settings-trigger { position: absolute; right: 14%; top: 44%; width: 26px; height: 26px; background: var(--visor-bg); border: 1px solid var(--border-color); border-radius: 50%; color: var(--text-color); font-size: 0.85rem; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: transform 0.3s, background 0.2s; z-index: 12; }
-        .settings-trigger:hover { transform: rotate(45deg); background: var(--border-color); }
-        .config-drawer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--drawer-bg); border-radius: 8px; box-sizing: border-box; padding: 15px; z-index: 15; display: flex; flex-direction: column; justify-content: center; backdrop-filter: blur(5px); opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
-        .config-drawer.visible { opacity: 1; pointer-events: auto; }
-        .drawer-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; }
-        .drawer-title { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-color); }
-        .close-btn { background: none; border: none; color: var(--text-color); font-size: 1.1rem; cursor: pointer; padding: 0; }
-        .input-group { margin-bottom: 8px; }
-        label { display: block; font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; text-transform: uppercase; color: var(--text-color); opacity: 0.8; }
-        .text-input { width: 100%; background: var(--visor-bg); border: 1px solid var(--border-color); color: var(--text-color); padding: 6px 10px; border-radius: 5px; font-size: 0.75rem; box-sizing: border-box; }
-        .file-dropzone { border: 1px dashed var(--border-color); border-radius: 5px; padding: 8px; text-align: center; cursor: pointer; font-size: 0.7rem; background: var(--visor-bg); color: var(--text-color); }
-        #file-input { display: none; }
-        .slider-container { display: flex; align-items: center; gap: 8px; }
-        .vol-slider { flex-grow: 1; height: 4px; background: var(--border-color); outline: none; -webkit-appearance: none; border-radius: 2px; }
-        .vol-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: var(--text-color); cursor: pointer; }
-        .spotify-container { margin-top: 5px; border-radius: 8px; overflow: hidden; background: #000; border: 1px solid var(--border-color); height: 152px; }
-        /* Nuevo estilo para ícono */
-        #spotify-icon { margin-left: 5px; font-size: 0.9rem; }
-    </style>
-</head>
-<body>
-
-<div class="player-wrapper">
-    <div class="header-controls">
-        <button class="theme-toggle" id="theme-toggle-btn" title="Cambiar Tema">🌓 TEMA</button>
-        <div class="visor-texto" id="track-display">SINTETIZADOR ANALÓGICO listo<span id="spotify-icon"></span></div>
-    </div>
-
-    <div class="grabadora-container">
-        <div class="led-indicator" id="status-led"></div>
-        <div class="compartment-mask">
-            <div class="casete-asset" id="casete-physical">
-                <div class="tape-window-overlay">
-                    <div class="reel-overlay" id="reel-left"></div>
-                    <div class="reel-overlay" id="reel-right"></div>
-                </div>
-            </div>
-        </div>
-        <div class="mapeo-botones">
-            <button class="btn-fisico" id="btn-rew" title="Retroceder"></button>
-            <button class="btn-fisico" id="btn-ff" title="Avanzar"></button>
-            <button class="btn-fisico" id="btn-play" title="Play"></button>
-            <button class="btn-fisico" id="btn-pause" title="Pause"></button>
-            <button class="btn-fisico" id="btn-eject" title="Expulsar casete"></button>
-            <button class="btn-fisico" id="radio-mode-btn" title="Activar Bypass"></button>
-            <button class="btn-fisico" id="radio-off-btn" title="Desactivar Bypass"></button>
-        </div>
-        <button class="settings-trigger" id="settings-btn" title="Ajustes">⚙️</button>
-
-        <div class="config-drawer" id="config-drawer">
-            <div class="drawer-header">
-                <span class="drawer-title">Configuración</span>
-                <button class="close-btn" id="close-drawer-btn" title="Cerrar">×</button>
-            </div>
-            <div class="input-group">
-                <label>Playlist Spotify</label>
-                <input type="text" class="text-input" id="spotify-link" placeholder="Pegar enlace de Spotify..." />
-            </div>
-            <div class="spotify-container">
-                <iframe id="spotify-iframe" width="100%" height="152" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
-            </div>
-            <div class="input-group" style="margin-top: 10px;">
-                <label>Audio Local (.MP3)</label>
-                <div class="file-dropzone" id="dropzone">📁 Cargar archivo</div>
-                <input type="file" id="file-input" accept="audio/*">
-            </div>
-            <div class="input-group">
-                <label>Volumen</label>
-                <div class="slider-container">
-                    <input type="range" class="vol-slider" id="volume-control" min="0" max="1" step="0.05" value="0.5">
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 <script>
-    // --- LÓGICA DE PERSISTENCIA Y NOTION FIX ---
+    let audioContext = null;
+    let noiseNode = null;
+    let filterNode = null;
+    let localAudio = new Audio();
+    let isPlaying = false;
+    let currentMode = 'analog'; 
+    let isAnalogBypassActive = true;
+
+    const btnPlay = document.getElementById('btn-play');
+    const btnPause = document.getElementById('btn-pause');
+    const btnRew = document.getElementById('btn-rew');
+    const btnFF = document.getElementById('btn-ff');
+    const btnEject = document.getElementById('btn-eject');
+    const radioBtn = document.getElementById('radio-mode-btn');
+    const radioOffBtn = document.getElementById('radio-off-btn');
+    const trackDisplay = document.getElementById('track-display');
+    const statusLed = document.getElementById('status-led');
+    const themeToggleBtn = document.getElementById('theme-toggle-btn');
+    
+    const settingsBtn = document.getElementById('settings-btn');
+    const closeDrawerBtn = document.getElementById('close-drawer-btn');
+    const configDrawer = document.getElementById('config-drawer');
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('file-input');
+    const volumeControl = document.getElementById('volume-control');
     const spotifyLink = document.getElementById('spotify-link');
-    const spotifyIcon = document.getElementById('spotify-icon');
+    const spotifyIframe = document.getElementById('spotify-iframe');
 
-    // Fix para Notion: Forzar foco en el input
-    spotifyLink.addEventListener('mousedown', (e) => {
-        e.stopPropagation();
-        spotifyLink.focus();
+    const reelLeft = document.getElementById('reel-left');
+    const reelRight = document.getElementById('reel-right');
+    const casetePhysical = document.getElementById('casete-physical');
+
+    radioBtn.classList.add('active');
+    statusLed.classList.add('active');
+
+    // --- NUEVA LÓGICA DE DETECCIÓN Y PEGADO ---
+    document.addEventListener('paste', (e) => {
+        const paste = (e.clipboardData || window.clipboardData).getData('text');
+        if (paste && paste.includes('spotify.com')) {
+            spotifyLink.value = paste;
+            procesarEnlaceSpotify(paste);
+            localStorage.setItem('last_spotify_playlist', paste);
+        }
     });
 
-    function actualizarIcono(url) {
-        if (url.includes('playlist')) spotifyIcon.textContent = ' 🎵';
-        else if (url.includes('track')) spotifyIcon.textContent = ' 🎧';
-        else if (url.includes('episode') || url.includes('show')) spotifyIcon.textContent = ' 🎙️';
-        else spotifyIcon.textContent = ' 🔗';
+    function obtenerIcono(url) {
+        if (url.includes('playlist')) return '🎵 ';
+        if (url.includes('track')) return '🎧 ';
+        if (url.includes('episode') || url.includes('show')) return '🎙️ ';
+        return '🔗 ';
     }
-
-    // Guardado y carga
-    spotifyLink.addEventListener('input', (e) => {
-        const url = e.target.value.trim();
-        localStorage.setItem('last_spotify_playlist', url);
-        actualizarIcono(url);
-        procesarEnlaceSpotify(url);
-    });
-
-    // --- (RESTO DE TU CÓDIGO ORIGINAL) ---
-    let audioContext = null; let noiseNode = null; let filterNode = null; let localAudio = new Audio();
-    let isPlaying = false; let currentMode = 'analog'; let isAnalogBypassActive = true;
-    const btnPlay = document.getElementById('btn-play'); const btnPause = document.getElementById('btn-pause');
-    const btnRew = document.getElementById('btn-rew'); const btnFF = document.getElementById('btn-ff');
-    const btnEject = document.getElementById('btn-eject'); const radioBtn = document.getElementById('radio-mode-btn');
-    const radioOffBtn = document.getElementById('radio-off-btn'); const trackDisplay = document.getElementById('track-display');
-    const statusLed = document.getElementById('status-led'); const themeToggleBtn = document.getElementById('theme-toggle-btn');
-    const settingsBtn = document.getElementById('settings-btn'); const closeDrawerBtn = document.getElementById('close-drawer-btn');
-    const configDrawer = document.getElementById('config-drawer'); const dropzone = document.getElementById('dropzone');
-    const fileInput = document.getElementById('file-input'); const volumeControl = document.getElementById('volume-control');
-    const spotifyIframe = document.getElementById('spotify-iframe'); const reelLeft = document.getElementById('reel-left');
-    const reelRight = document.getElementById('reel-right'); const casetePhysical = document.getElementById('casete-physical');
-
-    radioBtn.classList.add('active'); statusLed.classList.add('active');
 
     window.addEventListener('DOMContentLoaded', () => {
         const savedPlaylist = localStorage.getItem('last_spotify_playlist');
         if (savedPlaylist) {
             spotifyLink.value = savedPlaylist;
-            actualizarIcono(savedPlaylist);
             procesarEnlaceSpotify(savedPlaylist);
         }
         const savedTheme = localStorage.getItem('app-theme') || 'light';
@@ -179,12 +79,24 @@
             }
             spotifyIframe.src = embedUrl;
             currentMode = 'spotify';
-            trackDisplay.textContent = "SPOTIFY";
-            trackDisplay.appendChild(spotifyIcon);
+            trackDisplay.textContent = obtenerIcono(url) + "SPOTIFY CONFIGURADO";
+            
             casetePhysical.classList.remove('inserted');
             setTimeout(() => casetePhysical.classList.add('inserted'), 100);
         }
     }
+
+    spotifyLink.addEventListener('input', (e) => {
+        const url = e.target.value.trim();
+        if (url) {
+            localStorage.setItem('last_spotify_playlist', url);
+            procesarEnlaceSpotify(url);
+        } else {
+            localStorage.removeItem('last_spotify_playlist');
+            spotifyIframe.src = '';
+            currentMode = 'analog';
+        }
+    });
 
     let monitorInterval = setInterval(() => {
         if (document.activeElement === spotifyIframe) {
@@ -194,21 +106,26 @@
     }, 500);
 
     function playVisualsOnly() {
-        isPlaying = true; btnPlay.classList.add('active'); btnPause.classList.remove('active');
-        statusLed.classList.add('active'); reelLeft.className = 'reel-overlay spinning';
-        reelRight.className = 'reel-overlay spinning'; trackDisplay.textContent = "REPRODUCIENDO SPOTIFY";
+        isPlaying = true;
+        btnPlay.classList.add('active');
+        btnPause.classList.remove('active');
+        statusLed.classList.add('active');
+        reelLeft.className = 'reel-overlay spinning';
+        reelRight.className = 'reel-overlay spinning';
+        trackDisplay.textContent = "REPRODUCIENDO SPOTIFY";
     }
 
     dropzone.addEventListener('click', () => fileInput.click());
     dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.style.background = "var(--border-color)"; });
-    dropzone.addEventListener('dragleave', () => dropzone.style.background = "var(--visor-bg)");
+    dropzone.addEventListener('dragleave', () => { dropzone.style.background = "var(--visor-bg)"; });
     dropzone.addEventListener('drop', (e) => { e.preventDefault(); dropzone.style.background = "var(--visor-bg)"; if (e.dataTransfer.files.length > 0) cargarAudioLocal(e.dataTransfer.files[0]); });
     fileInput.addEventListener('change', (e) => { if (e.target.files.length > 0) cargarAudioLocal(e.target.files[0]); });
 
     function cargarAudioLocal(file) {
         localAudio.src = URL.createObjectURL(file);
         trackDisplay.textContent = file.name.toUpperCase();
-        currentMode = 'local'; stopAnalogNoise();
+        currentMode = 'local';
+        stopAnalogNoise();
         casetePhysical.classList.remove('inserted');
         setTimeout(() => { casetePhysical.classList.add('inserted'); playAudio(); }, 100);
     }
@@ -223,50 +140,69 @@
         const noiseBuffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
         const output = noiseBuffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) output[i] = (Math.random() * 2 - 1) * 0.012;
-        noiseNode = audioContext.createBufferSource(); noiseNode.buffer = noiseBuffer; noiseNode.loop = true;
-        filterNode = audioContext.createBiquadFilter(); filterNode.type = 'bandpass'; filterNode.frequency.value = 1000;
-        const gainNode = audioContext.createGain(); gainNode.gain.value = volumeControl.value;
-        noiseNode.connect(filterNode); filterNode.connect(gainNode); gainNode.connect(audioContext.destination);
+        noiseNode = audioContext.createBufferSource();
+        noiseNode.buffer = noiseBuffer;
+        noiseNode.loop = true;
+        filterNode = audioContext.createBiquadFilter();
+        filterNode.type = 'bandpass';
+        filterNode.frequency.value = 1000;
+        const gainNode = audioContext.createGain();
+        gainNode.gain.value = volumeControl.value;
+        noiseNode.connect(filterNode);
+        filterNode.connect(gainNode);
+        gainNode.connect(audioContext.destination);
         noiseNode.start(0);
     }
 
     function stopAnalogNoise() { if (noiseNode) { try { noiseNode.stop(); } catch(e) {} noiseNode = null; } }
 
     function playAudio() {
-        isPlaying = true; btnPlay.classList.add('active'); btnPause.classList.remove('active');
-        statusLed.classList.add('active'); reelLeft.className = 'reel-overlay spinning';
+        isPlaying = true;
+        btnPlay.classList.add('active');
+        btnPause.classList.remove('active');
+        statusLed.classList.add('active');
+        reelLeft.className = 'reel-overlay spinning';
         reelRight.className = 'reel-overlay spinning';
         if (currentMode === 'local') localAudio.play();
         else if (currentMode === 'analog') { startAnalogNoise(); trackDisplay.textContent = "SINTETIZADOR ACTIVO"; }
-        else if (currentMode === 'spotify') { trackDisplay.textContent = "SPOTIFY ACTIVO"; spotifyIframe.src = spotifyIframe.src; }
+        else if (currentMode === 'spotify') { trackDisplay.textContent = "SPOTIFY ACTIVO"; const currentSrc = spotifyIframe.src; spotifyIframe.src = currentSrc; }
     }
 
     function pauseAudio() {
-        isPlaying = false; btnPlay.classList.remove('active'); btnPause.classList.add('active');
-        statusLed.classList.remove('active'); reelLeft.className = 'reel-overlay'; reelRight.className = 'reel-overlay';
-        if (currentMode === 'local') localAudio.pause(); else stopAnalogNoise();
+        isPlaying = false;
+        btnPlay.classList.remove('active');
+        btnPause.classList.add('active');
+        statusLed.classList.remove('active');
+        reelLeft.className = 'reel-overlay';
+        reelRight.className = 'reel-overlay';
+        if (currentMode === 'local') localAudio.pause();
+        else stopAnalogNoise();
     }
 
-    btnPlay.addEventListener('click', playAudio); btnPause.addEventListener('click', pauseAudio);
+    btnPlay.addEventListener('click', playAudio);
+    btnPause.addEventListener('click', pauseAudio);
 
     btnFF.addEventListener('click', () => {
         if (currentMode === 'local') localAudio.currentTime += 5;
         else if (currentMode === 'spotify') spotifyIframe.src = spotifyIframe.src.split('#')[0] + '#' + Math.random();
-        reelLeft.className = 'reel-overlay spinning-fast'; reelRight.className = 'reel-overlay spinning-fast';
+        reelLeft.className = 'reel-overlay spinning-fast';
+        reelRight.className = 'reel-overlay spinning-fast';
         setTimeout(() => { if (isPlaying) { reelLeft.className = 'reel-overlay spinning'; reelRight.className = 'reel-overlay spinning'; } else { reelLeft.className = 'reel-overlay'; reelRight.className = 'reel-overlay'; } }, 600);
     });
 
     btnRew.addEventListener('click', () => {
         if (currentMode === 'local') localAudio.currentTime -= 5;
         else if (currentMode === 'spotify') spotifyIframe.src = spotifyIframe.src.split('#')[0] + '#' + Math.random();
-        reelLeft.className = 'reel-overlay spinning-reverse'; reelRight.className = 'reel-overlay spinning-reverse';
+        reelLeft.className = 'reel-overlay spinning-reverse';
+        reelRight.className = 'reel-overlay spinning-reverse';
         setTimeout(() => { if (isPlaying) { reelLeft.className = 'reel-overlay spinning'; reelRight.className = 'reel-overlay spinning'; } else { reelLeft.className = 'reel-overlay'; reelRight.className = 'reel-overlay'; } }, 600);
     });
 
     btnEject.addEventListener('click', () => { pauseAudio(); stopAnalogNoise(); localAudio.src = ''; trackDisplay.textContent = "CASSETE EXPULSADO"; casetePhysical.classList.remove('inserted'); });
+
     radioBtn.addEventListener('click', () => { isAnalogBypassActive = true; radioBtn.classList.add('active'); radioOffBtn.classList.remove('active'); statusLed.classList.add('active'); trackDisplay.textContent = "BYPASS ANALÓGICO ACTIVADO"; if (isPlaying) startAnalogNoise(); });
+
     radioOffBtn.addEventListener('click', () => { isAnalogBypassActive = false; radioBtn.classList.remove('active'); radioOffBtn.classList.add('active'); statusLed.classList.remove('active'); stopAnalogNoise(); if (currentMode === 'spotify' && spotifyLink.value) trackDisplay.textContent = "SPOTIFY ACTIVO (SIN BYPASS)"; else if (currentMode === 'local' && localAudio.src) { trackDisplay.textContent = "AUDIO LOCAL ACTIVO"; if (isPlaying) { localAudio.play(); statusLed.classList.add('active'); } } else trackDisplay.textContent = "SINTETIZADOR DESACTIVADO"; });
-    volumeControl.addEventListener('input', (e) => localAudio.volume = e.target.value);
+
+    volumeControl.addEventListener('input', (e) => { localAudio.volume = e.target.value; });
 </script>
-</body>
-</html>
