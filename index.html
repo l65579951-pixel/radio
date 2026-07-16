@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Casetera HTML5 Real (Corregida)</title>
+    <title>Casetera Analógica 100% Segura</title>
     <style>
         :root {
             --bg-color: #f4ebd9;
@@ -13,7 +13,6 @@
             --label-color: #e6e6e6;
             --text-color: #333;
             --widget-bg: #ffffff;
-            --input-border: #ccc;
         }
 
         [data-theme="dark"] {
@@ -24,7 +23,6 @@
             --label-color: #cccccc;
             --text-color: #f1f1f1;
             --widget-bg: #1e1e1e;
-            --input-border: #333;
         }
 
         body {
@@ -55,39 +53,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .setup-panel {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-bottom: 20px;
-        }
-
-        input[type="text"] {
-            padding: 12px;
-            border: 2px solid var(--input-border);
-            border-radius: 8px;
-            background: var(--widget-bg);
-            color: var(--text-color);
-            font-size: 0.9rem;
-        }
-
-        .btn-save {
-            background: #2a2a2a;
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 0.9rem;
-            transition: background 0.2s;
-        }
-        
-        .btn-save:hover {
-            background: #444;
+            margin-bottom: 25px;
         }
 
         /* GRABADORA DE CASETE */
@@ -174,7 +140,7 @@
         }
 
         .btn-mechanic {
-            width: 70px;
+            width: 80px;
             height: 50px;
             background: linear-gradient(180deg, #666, #333);
             border: 1px solid #111;
@@ -206,7 +172,21 @@
         }
         
         .btn-mechanic.active-play {
-            color: #1DB954;
+            color: #1db954;
+        }
+        
+        .status-light {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #444;
+            box-shadow: 0 0 2px rgba(0,0,0,0.5);
+            transition: background-color 0.2s, box-shadow 0.2s;
+        }
+        
+        .status-light.on {
+            background-color: #ff3333;
+            box-shadow: 0 0 8px #ff3333;
         }
     </style>
 </head>
@@ -214,14 +194,11 @@
 
 <div class="container">
     <div class="header">
-        <h3 style="margin: 0; letter-spacing: 1px;">CASSETTE DECK</h3>
-        <button onclick="toggleTheme()" style="background:none; border:1px solid var(--text-color); color:var(--text-color); font-family:inherit; border-radius:12px; cursor:pointer; padding:2px 10px; font-size: 0.8rem;">TEMA</button>
-    </div>
-
-    <!-- CARGADOR DE AUDIO -->
-    <div class="setup-panel">
-        <input type="text" id="audio-input" placeholder="Enlace a transmisión (Streaming URL)">
-        <button class="btn-save" onclick="loadNewAudio()">Cargar Música</button>
+        <h3 style="margin: 0; letter-spacing: 1px;">SYNTH DECK</h3>
+        <div style="display:flex; align-items:center; gap: 8px;">
+            <div class="status-light" id="power-led"></div>
+            <button onclick="toggleTheme()" style="background:none; border:1px solid var(--text-color); color:var(--text-color); font-family:inherit; border-radius:12px; cursor:pointer; padding:2px 10px; font-size: 0.8rem;">TEMA</button>
+        </div>
     </div>
 
     <!-- LA CASETERA -->
@@ -236,105 +213,162 @@
                     <div style="width: 45px; height: 6px; background: #111; border-radius: 3px;"></div>
                     <div class="reel" id="right-reel"></div>
                 </div>
-                <div style="height: 5px; text-align: center; color: #777; font-size: 0.5rem;">HIGH POSITION (TYPE II)</div>
+                <div style="height: 5px; text-align: center; color: #777; font-size: 0.5rem;">INTERNAL ANALOG GENERATOR</div>
             </div>
         </div>
 
         <!-- CONTROLES HTML5 FÍSICOS -->
         <div class="controls-row">
-            <div class="btn-mechanic" id="btn-stop" onclick="stopAudio()">
+            <div class="btn-mechanic" id="btn-stop" onclick="stopSynth()">
                 <span>⏹</span><span>STOP</span>
             </div>
-            <div class="btn-mechanic" id="btn-play" onclick="togglePlay()">
+            <div class="btn-mechanic" id="btn-play" onclick="toggleSynth()">
                 <span>▶/⏸</span><span>PLAY</span>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Elemento de audio nativo invisible -->
-<!-- Usamos un canal de radio Lofi abierto y compatible con navegadores -->
-<audio id="audio-engine" crossorigin="anonymous" loop>
-    <source src="https://hyades.shoutca.st/10283/stream" type="audio/mpeg">
-</audio>
-
 <script>
-    const audio = document.getElementById('audio-engine');
+    let audioCtx = null;
+    let isPlaying = false;
+    let synthInterval = null;
+    
+    // Nodos de audio
+    let osc1 = null;
+    let osc2 = null;
+    let filter = null;
+    let masterGain = null;
+
     const playBtn = document.getElementById('btn-play');
     const stopBtn = document.getElementById('btn-stop');
+    const powerLed = document.getElementById('power-led');
     const leftReel = document.getElementById('left-reel');
     const rightReel = document.getElementById('right-reel');
-
-    // Estación de respaldo segura
-    const fallbackStream = "https://hyades.shoutca.st/10283/stream";
 
     window.onload = () => {
         const savedTheme = localStorage.getItem('theme') || 'light';
         document.documentElement.setAttribute('data-theme', savedTheme);
-        
-        // Cargar transmisión por defecto o la guardada
-        const savedAudio = localStorage.getItem('lastAudioUrl');
-        if (savedAudio) {
-            document.getElementById('audio-input').value = savedAudio;
-            audio.src = savedAudio;
-        } else {
-            document.getElementById('audio-input').value = fallbackStream;
-        }
     };
 
-    function togglePlay() {
-        if (audio.paused) {
-            // El truco para que las radios en vivo no tengan delay acumulado al pausar y despausar:
-            // Si es un stream en vivo, recargamos para tomar la transmisión en tiempo real
-            if (audio.src.includes("stream") || audio.src.includes("shoutcast") || audio.src.includes("icecast")) {
-                audio.load(); 
-            }
+    function initAudio() {
+        // El contexto de audio se debe inicializar bajo acción del usuario
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Creamos una cadena de sonido simple: Osciladores -> Filtro -> Volumen -> Salida
+        filter = audioCtx.createBiquadFilter();
+        filter.type = "lowpass";
+        filter.frequency.setValueAtTime(800, audioCtx.currentTime);
+        filter.Q.setValueAtTime(1, audioCtx.currentTime);
 
-            audio.play()
-                .then(() => {
-                    playBtn.classList.add('active', 'active-play');
-                    stopBtn.classList.remove('active');
-                    leftReel.classList.add('spinning');
-                    rightReel.classList.add('spinning');
-                })
-                .catch(err => {
-                    console.error("Error al reproducir: ", err);
-                    alert("No se pudo conectar al servidor de audio. Asegúrate de tener conexión o de usar una URL con CORS habilitado.");
-                });
+        masterGain = audioCtx.createGain();
+        masterGain.gain.setValueAtTime(0, audioCtx.currentTime); // Empezamos en silencio
+
+        filter.connect(masterGain);
+        masterGain.connect(audioCtx.destination);
+    }
+
+    // Melodía cíclica estilo Synthwave generada por código
+    const notes = [110.00, 110.00, 164.81, 164.81, 130.81, 130.81, 146.83, 146.83]; // Frecuencias en Hz (La, Mi, Do, Re)
+    let noteIndex = 0;
+
+    function playNote() {
+        if (!audioCtx || audioCtx.state === 'suspended') return;
+
+        let time = audioCtx.currentTime;
+        let freq = notes[noteIndex];
+
+        // Oscilador 1 (Onda de sierra para sonido retro de sintetizador)
+        let o1 = audioCtx.createOscillator();
+        o1.type = "sawtooth";
+        o1.frequency.setValueAtTime(freq, time);
+
+        // Oscilador 2 (Onda triangular una octava arriba para darle cuerpo)
+        let o2 = audioCtx.createOscillator();
+        o2.type = "triangle";
+        o2.frequency.setValueAtTime(freq * 2, time);
+
+        // Volumen independiente por nota (Envolvente)
+        let noteGain = audioCtx.createGain();
+        noteGain.gain.setValueAtTime(0.15, time);
+        noteGain.gain.exponentialRampToValueAtTime(0.001, time + 0.35); // Decaimiento rápido
+
+        o1.connect(noteGain);
+        o2.connect(noteGain);
+        noteGain.connect(filter);
+
+        o1.start(time);
+        o2.start(time);
+        
+        o1.stop(time + 0.4);
+        o2.stop(time + 0.4);
+
+        noteIndex = (noteIndex + 1) % notes.length;
+    }
+
+    function toggleSynth() {
+        // Inicializar si es la primera vez
+        if (!audioCtx) {
+            initAudio();
+        }
+
+        // Si el navegador suspendió el audio, lo despertamos
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+
+        if (!isPlaying) {
+            isPlaying = true;
+            
+            // Subimos el volumen maestro suavemente
+            masterGain.gain.linearRampToValueAtTime(0.8, audioCtx.currentTime + 0.1);
+            
+            // Iniciamos la secuencia de notas (ritmo constante)
+            playNote();
+            synthInterval = setInterval(playNote, 400);
+
+            // Ajustes visuales
+            playBtn.classList.add('active', 'active-play');
+            stopBtn.classList.remove('active');
+            powerLed.classList.add('on');
+            leftReel.classList.add('spinning');
+            rightReel.classList.add('spinning');
         } else {
-            audio.pause();
-            playBtn.classList.remove('active', 'active-play');
-            leftReel.classList.remove('spinning');
-            rightReel.classList.remove('spinning');
+            pauseSynth();
         }
     }
 
-    function stopAudio() {
-        audio.pause();
-        // Si no es un directo en vivo, lo mandamos al inicio
-        try {
-            audio.currentTime = 0; 
-        } catch(e) {
-            // Ignorar para transmisiones en vivo que no admiten reset de tiempo
-        }
+    function pauseSynth() {
+        isPlaying = false;
+        clearInterval(synthInterval);
         
+        if (masterGain) {
+            masterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+        }
+
+        playBtn.classList.remove('active', 'active-play');
+        leftReel.classList.remove('spinning');
+        rightReel.classList.remove('spinning');
+    }
+
+    function stopSynth() {
+        isPlaying = false;
+        clearInterval(synthInterval);
+        
+        if (masterGain) {
+            masterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+        }
+
+        noteIndex = 0; // Reiniciar melodía
+
         playBtn.classList.remove('active', 'active-play');
         stopBtn.classList.add('active');
+        powerLed.classList.remove('on');
         
         setTimeout(() => stopBtn.classList.remove('active'), 300);
         
         leftReel.classList.remove('spinning');
         rightReel.classList.remove('spinning');
-    }
-
-    function loadNewAudio() {
-        const url = document.getElementById('audio-input').value.trim();
-        if (url) {
-            localStorage.setItem('lastAudioUrl', url);
-            audio.src = url;
-            stopAudio();
-            togglePlay();
-        }
     }
 
     function toggleTheme() {
