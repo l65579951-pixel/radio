@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Casetera Camuflada Spotify</title>
+    <title>Casetera Blindada Spotify</title>
     <style>
         :root {
             --bg-color: #f4ebd9;
@@ -85,7 +85,7 @@
             font-size: 0.9rem;
         }
 
-        /* DISEÑO DE LA GRABADORA DE CASETE */
+        /* GRABADORA DE CASETE */
         .cassette-player {
             background-color: var(--panel-color);
             border-radius: 16px;
@@ -95,7 +95,6 @@
             overflow: hidden;
         }
 
-        /* Ventana del Casete */
         .tape-deck {
             background-color: var(--deck-color);
             height: 140px;
@@ -158,18 +157,18 @@
             animation: spin 2.5s linear infinite;
         }
 
-        /* CONTENEDOR MAESTRO DE CAMUFLAJE DE BOTONES */
+        /* CONTENEDOR DE CONTROLES MULTICAPA */
         .controls-wrapper {
             position: relative;
             margin-top: 25px;
-            height: 80px; /* Alto idéntico al widget de Spotify */
+            height: 80px;
             background-color: #222;
             border-radius: 8px;
             box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
             overflow: hidden;
         }
 
-        /* Capa 1 (ABAJO): El reproductor de Spotify REAL completamente oculto a la vista */
+        /* CAPA 1 (ABAJO): El widget de Spotify */
         .spotify-iframe-container {
             position: absolute;
             top: 0;
@@ -177,7 +176,7 @@
             width: 100%;
             height: 100%;
             z-index: 1;
-            opacity: 0.001; /* Completamente invisible, pero interactivo para clics */
+            opacity: 0.001; /* Invisible pero interactivo */
         }
 
         .spotify-iframe-container iframe {
@@ -186,16 +185,45 @@
             border: none;
         }
 
-        /* Capa 2 (ARRIBA): Botonera del Casete 100% visible */
-        /* Usamos pointer-events: none para que los clics del mouse la "atraviesen" */
-        .controls-overlay-facade {
+        /* CAPA 2 (MEDIO): El escudo anti-redirecciones */
+        /* Esta capa bloquea los clics en zonas peligrosas (como el título o logo de Spotify) */
+        .anti-redirect-shield {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             z-index: 2;
-            pointer-events: none; /* MAGIA: El clic del ratón pasa a través de esta capa */
+            pointer-events: none; /* De base deja pasar el clic */
+            display: flex;
+        }
+
+        /* Bloqueador Izquierdo (Cubre logo y título) */
+        .shield-block-left {
+            width: 160px; /* Cubre toda el área izquierda de Spotify */
+            height: 100%;
+            pointer-events: auto; /* Bloquea el clic aquí */
+            cursor: default;
+        }
+
+        /* Bloqueador Derecho (Cubre el botón de abrir en app y los bordes) */
+        .shield-block-right {
+            flex-grow: 1;
+            height: 100%;
+            pointer-events: auto; /* Bloquea el clic aquí */
+            cursor: default;
+            margin-left: 80px; /* Deja una ventana de 80px libre justo sobre el botón Play/Pause */
+        }
+
+        /* CAPA 3 (ARRIBA): Fachada visual de botones */
+        .controls-overlay-facade {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 3;
+            pointer-events: none; /* Los clics la atraviesan */
             display: flex;
             justify-content: space-around;
             align-items: center;
@@ -203,7 +231,6 @@
             box-sizing: border-box;
         }
 
-        /* Botones Mecánicos de Fachada */
         .btn-mechanic-visual {
             width: 60px;
             height: 50px;
@@ -221,13 +248,11 @@
             text-shadow: 1px 1px 1px #000;
         }
 
-        /* Al ser pointer-events: none, no podemos usar :active directamente de forma normal,
-           pero mediante JS controlamos una clase para dar la sensación física al pulsar */
         .btn-mechanic-visual.pressed-animation {
             transform: translateY(3px);
             box-shadow: 0 1px 0px #000;
             background: linear-gradient(180deg, #222, #111);
-            color: #1DB954; /* Brillo verde al activarse */
+            color: #1DB954;
         }
     </style>
 </head>
@@ -248,7 +273,7 @@
     <!-- LA CASETERA -->
     <div class="cassette-player">
         
-        <!-- Casete giratorio -->
+        <!-- Casete visual -->
         <div class="tape-deck">
             <div class="cassette">
                 <div style="height: 5px;"></div>
@@ -261,15 +286,22 @@
             </div>
         </div>
 
-        <!-- ZONA DE CONTROLES CAMUFLADOS -->
+        <!-- CONTROLES TRIPLE CAPA -->
         <div class="controls-wrapper" id="interact-zone">
             
-            <!-- CAPA 1 (ABAJO): El reproductor real de Spotify (100% invisible) -->
+            <!-- CAPA 1: Spotify (Invisible) -->
             <div class="spotify-iframe-container" id="spotify-container">
                 <!-- Se inyecta aquí -->
             </div>
 
-            <!-- CAPA 2 (ARRIBA): La botonera retro visible (Los clics la atraviesan) -->
+            <!-- CAPA 2: El Escudo Inteligente -->
+            <!-- Evita que el usuario haga clic en zonas de Spotify que redirigen a su web -->
+            <div class="anti-redirect-shield">
+                <div class="shield-block-left"></div>
+                <div class="shield-block-right"></div>
+            </div>
+
+            <!-- CAPA 3: Fachada Visual (Atravesable) -->
             <div class="controls-overlay-facade">
                 <div class="btn-mechanic-visual" id="vis-prev"><span>⏪</span><span>PREV</span></div>
                 <div class="btn-mechanic-visual" id="vis-play"><span>▶/⏸</span><span>PLAY</span></div>
@@ -281,7 +313,6 @@
 </div>
 
 <script>
-    // Recupera la última playlist guardada en memoria
     let currentPlaylist = localStorage.getItem('lastPlaylist') || 'https://open.spotify.com/playlist/37i9dQZF1DXcBWIGv263vj';
     let isPlaying = false;
 
@@ -292,9 +323,7 @@
         const savedTheme = localStorage.getItem('theme') || 'light';
         document.documentElement.setAttribute('data-theme', savedTheme);
 
-        // --- SISTEMA INTELIGENTE DE DETECCIÓN ---
-        // Al hacer clic en la zona, el iframe invisible absorbe el clic. 
-        // Esto causa que la ventana principal pierda el foco ('blur').
+        // Detectar interacción con el iframe
         window.addEventListener('blur', () => {
             setTimeout(() => {
                 if (document.activeElement.tagName === 'IFRAME') {
@@ -303,7 +332,7 @@
             }, 150);
         });
 
-        // Eventos visuales simulados al hacer click en la zona de control
+        // Feedback táctil del botón
         const interactZone = document.getElementById('interact-zone');
         const playBtn = document.getElementById('vis-play');
 
@@ -337,7 +366,6 @@
             playBtn.classList.remove('pressed-animation');
         }
         
-        // Devolvemos el foco al documento para que el próximo clic vuelva a disparar el evento 'blur'
         window.focus();
     }
 
@@ -381,7 +409,6 @@
             localStorage.setItem('lastPlaylist', currentPlaylist);
             buildSpotifyIframe(currentPlaylist);
             
-            // Reiniciar animación del casete al meter una cinta nueva
             isPlaying = false;
             toggleCassetteAnimation();
         }
