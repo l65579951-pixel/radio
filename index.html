@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Casetera Blindada Spotify</title>
+    <title>Casetera HTML5 Real</title>
     <style>
         :root {
             --bg-color: #f4ebd9;
@@ -60,12 +60,12 @@
 
         .setup-panel {
             display: flex;
-            gap: 10px;
+            flex-direction: column;
+            gap: 8px;
             margin-bottom: 20px;
         }
 
         input[type="text"] {
-            flex: 1;
             padding: 12px;
             border: 2px solid var(--input-border);
             border-radius: 8px;
@@ -74,15 +74,20 @@
             font-size: 0.9rem;
         }
 
-        button.btn-save {
-            background: #1DB954;
+        .btn-save {
+            background: #2a2a2a;
             color: white;
             border: none;
-            padding: 0 18px;
+            padding: 10px;
             border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
             font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+        
+        .btn-save:hover {
+            background: #444;
         }
 
         /* GRABADORA DE CASETE */
@@ -92,7 +97,6 @@
             padding: 20px;
             box-shadow: inset 0 0 20px rgba(0,0,0,0.9), 0 8px 20px rgba(0,0,0,0.3);
             position: relative;
-            overflow: hidden;
         }
 
         .tape-deck {
@@ -157,88 +161,26 @@
             animation: spin 2.5s linear infinite;
         }
 
-        /* CONTENEDOR DE CONTROLES MULTICAPA */
-        .controls-wrapper {
-            position: relative;
-            margin-top: 25px;
-            height: 80px;
-            background-color: #222;
-            border-radius: 8px;
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
-            overflow: hidden;
-        }
-
-        /* CAPA 1 (ABAJO): El widget de Spotify */
-        .spotify-iframe-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-            opacity: 0.001; /* Invisible pero interactivo */
-        }
-
-        .spotify-iframe-container iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-
-        /* CAPA 2 (MEDIO): El escudo anti-redirecciones */
-        /* Esta capa bloquea los clics en zonas peligrosas (como el título o logo de Spotify) */
-        .anti-redirect-shield {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 2;
-            pointer-events: none; /* De base deja pasar el clic */
-            display: flex;
-        }
-
-        /* Bloqueador Izquierdo (Cubre logo y título) */
-        .shield-block-left {
-            width: 160px; /* Cubre toda el área izquierda de Spotify */
-            height: 100%;
-            pointer-events: auto; /* Bloquea el clic aquí */
-            cursor: default;
-        }
-
-        /* Bloqueador Derecho (Cubre el botón de abrir en app y los bordes) */
-        .shield-block-right {
-            flex-grow: 1;
-            height: 100%;
-            pointer-events: auto; /* Bloquea el clic aquí */
-            cursor: default;
-            margin-left: 80px; /* Deja una ventana de 80px libre justo sobre el botón Play/Pause */
-        }
-
-        /* CAPA 3 (ARRIBA): Fachada visual de botones */
-        .controls-overlay-facade {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 3;
-            pointer-events: none; /* Los clics la atraviesan */
+        /* CONTROLES REALES */
+        .controls-row {
             display: flex;
             justify-content: space-around;
             align-items: center;
-            padding: 0 10px;
-            box-sizing: border-box;
+            margin-top: 25px;
+            background-color: #222;
+            padding: 12px 10px;
+            border-radius: 8px;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
         }
 
-        .btn-mechanic-visual {
-            width: 60px;
+        .btn-mechanic {
+            width: 70px;
             height: 50px;
             background: linear-gradient(180deg, #666, #333);
             border: 1px solid #111;
             border-radius: 6px;
             color: #eee;
-            font-size: 0.65rem;
+            font-size: 0.7rem;
             font-weight: bold;
             display: flex;
             flex-direction: column;
@@ -246,12 +188,24 @@
             justify-content: center;
             box-shadow: 0 4px 0px #000;
             text-shadow: 1px 1px 1px #000;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.1s, box-shadow 0.1s;
         }
 
-        .btn-mechanic-visual.pressed-animation {
-            transform: translateY(3px);
-            box-shadow: 0 1px 0px #000;
+        .btn-mechanic:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0px #000;
+        }
+
+        .btn-mechanic.active {
+            transform: translateY(4px);
+            box-shadow: 0 0px 0px #000;
             background: linear-gradient(180deg, #222, #111);
+            color: #ff9f43;
+        }
+        
+        .btn-mechanic.active-play {
             color: #1DB954;
         }
     </style>
@@ -260,14 +214,14 @@
 
 <div class="container">
     <div class="header">
-        <h3 style="margin: 0; letter-spacing: 1px;">AUTO-REVERSE</h3>
+        <h3 style="margin: 0; letter-spacing: 1px;">CASSETTE DECK</h3>
         <button onclick="toggleTheme()" style="background:none; border:1px solid var(--text-color); color:var(--text-color); font-family:inherit; border-radius:12px; cursor:pointer; padding:2px 10px; font-size: 0.8rem;">TEMA</button>
     </div>
 
-    <!-- CARGADOR INTERNO DE PLAYLIST -->
+    <!-- CARGADOR DE AUDIO -->
     <div class="setup-panel">
-        <input type="text" id="playlist-input" placeholder="Pega tu enlace de Spotify aquí">
-        <button class="btn-save" onclick="loadPlaylist()">Grabar</button>
+        <input type="text" id="audio-input" placeholder="Enlace directo a un archivo de audio (.mp3)">
+        <button class="btn-save" onclick="loadNewAudio()">Cargar Música</button>
     </div>
 
     <!-- LA CASETERA -->
@@ -282,91 +236,91 @@
                     <div style="width: 45px; height: 6px; background: #111; border-radius: 3px;"></div>
                     <div class="reel" id="right-reel"></div>
                 </div>
-                <div style="height: 5px; text-align: center; color: #777; font-size: 0.5rem;">DYNAMIC SOUND SYSTEM</div>
+                <div style="height: 5px; text-align: center; color: #777; font-size: 0.5rem;">HIGH POSITION (TYPE II)</div>
             </div>
         </div>
 
-        <!-- CONTROLES TRIPLE CAPA -->
-        <div class="controls-wrapper" id="interact-zone">
-            
-            <!-- CAPA 1: Spotify (Invisible) -->
-            <div class="spotify-iframe-container" id="spotify-container">
-                <!-- Se inyecta aquí -->
+        <!-- CONTROLES HTML5 FÍSICOS -->
+        <div class="controls-row">
+            <div class="btn-mechanic" id="btn-stop" onclick="stopAudio()">
+                <span>⏹</span><span>STOP</span>
             </div>
-
-            <!-- CAPA 2: El Escudo Inteligente -->
-            <!-- Evita que el usuario haga clic en zonas de Spotify que redirigen a su web -->
-            <div class="anti-redirect-shield">
-                <div class="shield-block-left"></div>
-                <div class="shield-block-right"></div>
+            <div class="btn-mechanic" id="btn-play" onclick="togglePlay()">
+                <span>▶/⏸</span><span>PLAY</span>
             </div>
-
-            <!-- CAPA 3: Fachada Visual (Atravesable) -->
-            <div class="controls-overlay-facade">
-                <div class="btn-mechanic-visual" id="vis-prev"><span>⏪</span><span>PREV</span></div>
-                <div class="btn-mechanic-visual" id="vis-play"><span>▶/⏸</span><span>PLAY</span></div>
-                <div class="btn-mechanic-visual" id="vis-next"><span>⏩</span><span>NEXT</span></div>
-            </div>
-
         </div>
     </div>
 </div>
 
+<!-- Elemento de audio nativo invisible -->
+<audio id="audio-engine" loop>
+    <!-- Canción libre por defecto (Lofi Beats) -->
+    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+</audio>
+
 <script>
-    let currentPlaylist = localStorage.getItem('lastPlaylist') || 'https://open.spotify.com/playlist/37i9dQZF1DXcBWIGv263vj';
-    let isPlaying = false;
+    const audio = document.getElementById('audio-engine');
+    const playBtn = document.getElementById('btn-play');
+    const stopBtn = document.getElementById('btn-stop');
+    const leftReel = document.getElementById('left-reel');
+    const rightReel = document.getElementById('right-reel');
 
     window.onload = () => {
-        document.getElementById('playlist-input').value = currentPlaylist;
-        buildSpotifyIframe(currentPlaylist);
-        
         const savedTheme = localStorage.getItem('theme') || 'light';
         document.documentElement.setAttribute('data-theme', savedTheme);
-
-        // Detectar interacción con el iframe
-        window.addEventListener('blur', () => {
-            setTimeout(() => {
-                if (document.activeElement.tagName === 'IFRAME') {
-                    toggleCassetteAnimation();
-                }
-            }, 150);
-        });
-
-        // Feedback táctil del botón
-        const interactZone = document.getElementById('interact-zone');
-        const playBtn = document.getElementById('vis-play');
-
-        interactZone.addEventListener('mousedown', () => {
-            playBtn.classList.add('pressed-animation');
-        });
-
-        interactZone.addEventListener('mouseup', () => {
-            setTimeout(() => {
-                if (!isPlaying) {
-                    playBtn.classList.remove('pressed-animation');
-                }
-            }, 250);
-        });
+        
+        // Cargar última pista si existe
+        const savedAudio = localStorage.getItem('lastAudioUrl');
+        if (savedAudio) {
+            document.getElementById('audio-input').value = savedAudio;
+            audio.src = savedAudio;
+        } else {
+            document.getElementById('audio-input').value = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
+        }
     };
 
-    function toggleCassetteAnimation() {
-        isPlaying = !isPlaying;
-        
-        const leftReel = document.getElementById('left-reel');
-        const rightReel = document.getElementById('right-reel');
-        const playBtn = document.getElementById('vis-play');
-
-        if (isPlaying) {
-            leftReel.classList.add('spinning');
-            rightReel.classList.add('spinning');
-            playBtn.classList.add('pressed-animation');
+    function togglePlay() {
+        if (audio.paused) {
+            audio.play()
+                .then(() => {
+                    playBtn.classList.add('active', 'active-play');
+                    stopBtn.classList.remove('active');
+                    leftReel.classList.add('spinning');
+                    rightReel.classList.add('spinning');
+                })
+                .catch(err => {
+                    alert("No se pudo reproducir el audio. Asegúrate de que el enlace sea válido y directo.");
+                });
         } else {
+            audio.pause();
+            playBtn.classList.remove('active', 'active-play');
             leftReel.classList.remove('spinning');
             rightReel.classList.remove('spinning');
-            playBtn.classList.remove('pressed-animation');
         }
+    }
+
+    function stopAudio() {
+        audio.pause();
+        audio.currentTime = 0; // Reiniciar al inicio
         
-        window.focus();
+        playBtn.classList.remove('active', 'active-play');
+        stopBtn.classList.add('active');
+        
+        // Apagar el botón de stop visualmente un momento después
+        setTimeout(() => stopBtn.classList.remove('active'), 300);
+        
+        leftReel.classList.remove('spinning');
+        rightReel.classList.remove('spinning');
+    }
+
+    function loadNewAudio() {
+        const url = document.getElementById('audio-input').value.trim();
+        if (url) {
+            localStorage.setItem('lastAudioUrl', url);
+            audio.src = url;
+            stopAudio();
+            togglePlay();
+        }
     }
 
     function toggleTheme() {
@@ -374,44 +328,6 @@
         const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', newTheme);
         localStorage.setItem('theme', newTheme);
-    }
-
-    function cleanSpotifyUrl(url) {
-        if (!url) return '';
-        if (url.includes('spotify.com') && !url.includes('/embed')) {
-            return url.replace('spotify.com/', 'spotify.com/embed/');
-        }
-        return url;
-    }
-
-    function buildSpotifyIframe(url) {
-        const container = document.getElementById('spotify-container');
-        const cleanUrl = cleanSpotifyUrl(url);
-        
-        if (cleanUrl) {
-            container.innerHTML = `
-                <iframe 
-                    id="spotify-iframe"
-                    src="${cleanUrl}?utm_source=generator&theme=0" 
-                    width="100%" 
-                    height="80" 
-                    frameBorder="0" 
-                    allowfullscreen="" 
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture">
-                </iframe>`;
-        }
-    }
-
-    function loadPlaylist() {
-        const inputVal = document.getElementById('playlist-input').value.trim();
-        if (inputVal) {
-            currentPlaylist = inputVal;
-            localStorage.setItem('lastPlaylist', currentPlaylist);
-            buildSpotifyIframe(currentPlaylist);
-            
-            isPlaying = false;
-            toggleCassetteAnimation();
-        }
     }
 </script>
 
