@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Casetera HTML5 Real</title>
+    <title>Casetera HTML5 Real (Corregida)</title>
     <style>
         :root {
             --bg-color: #f4ebd9;
@@ -220,7 +220,7 @@
 
     <!-- CARGADOR DE AUDIO -->
     <div class="setup-panel">
-        <input type="text" id="audio-input" placeholder="Enlace directo a un archivo de audio (.mp3)">
+        <input type="text" id="audio-input" placeholder="Enlace a transmisión (Streaming URL)">
         <button class="btn-save" onclick="loadNewAudio()">Cargar Música</button>
     </div>
 
@@ -253,9 +253,9 @@
 </div>
 
 <!-- Elemento de audio nativo invisible -->
-<audio id="audio-engine" loop>
-    <!-- Canción libre por defecto (Lofi Beats) -->
-    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+<!-- Usamos un canal de radio Lofi abierto y compatible con navegadores -->
+<audio id="audio-engine" crossorigin="anonymous" loop>
+    <source src="https://hyades.shoutca.st/10283/stream" type="audio/mpeg">
 </audio>
 
 <script>
@@ -265,22 +265,31 @@
     const leftReel = document.getElementById('left-reel');
     const rightReel = document.getElementById('right-reel');
 
+    // Estación de respaldo segura
+    const fallbackStream = "https://hyades.shoutca.st/10283/stream";
+
     window.onload = () => {
         const savedTheme = localStorage.getItem('theme') || 'light';
         document.documentElement.setAttribute('data-theme', savedTheme);
         
-        // Cargar última pista si existe
+        // Cargar transmisión por defecto o la guardada
         const savedAudio = localStorage.getItem('lastAudioUrl');
         if (savedAudio) {
             document.getElementById('audio-input').value = savedAudio;
             audio.src = savedAudio;
         } else {
-            document.getElementById('audio-input').value = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
+            document.getElementById('audio-input').value = fallbackStream;
         }
     };
 
     function togglePlay() {
         if (audio.paused) {
+            // El truco para que las radios en vivo no tengan delay acumulado al pausar y despausar:
+            // Si es un stream en vivo, recargamos para tomar la transmisión en tiempo real
+            if (audio.src.includes("stream") || audio.src.includes("shoutcast") || audio.src.includes("icecast")) {
+                audio.load(); 
+            }
+
             audio.play()
                 .then(() => {
                     playBtn.classList.add('active', 'active-play');
@@ -289,7 +298,8 @@
                     rightReel.classList.add('spinning');
                 })
                 .catch(err => {
-                    alert("No se pudo reproducir el audio. Asegúrate de que el enlace sea válido y directo.");
+                    console.error("Error al reproducir: ", err);
+                    alert("No se pudo conectar al servidor de audio. Asegúrate de tener conexión o de usar una URL con CORS habilitado.");
                 });
         } else {
             audio.pause();
@@ -301,12 +311,16 @@
 
     function stopAudio() {
         audio.pause();
-        audio.currentTime = 0; // Reiniciar al inicio
+        // Si no es un directo en vivo, lo mandamos al inicio
+        try {
+            audio.currentTime = 0; 
+        } catch(e) {
+            // Ignorar para transmisiones en vivo que no admiten reset de tiempo
+        }
         
         playBtn.classList.remove('active', 'active-play');
         stopBtn.classList.add('active');
         
-        // Apagar el botón de stop visualmente un momento después
         setTimeout(() => stopBtn.classList.remove('active'), 300);
         
         leftReel.classList.remove('spinning');
