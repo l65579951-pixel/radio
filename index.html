@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Grabadora Retro Casete Real</title>
+  <title>Grabadora Roja Funcional</title>
   <style>
     :root {
       --bg-color: #f4f4f5;
@@ -22,64 +22,181 @@
       height: 100vh;
       margin: 0;
       overflow: hidden;
-      /* Activamos la perspectiva 3D global para el ojo */
-      perspective: 1000px;
     }
 
-    /* Estructura base del aparato */
-    .grabadora-container {
+    .widget-container {
       position: relative;
       width: 450px;
       height: 320px;
+    }
+
+    /* EL CASETE ROJO: Centrado y ubicado en la casetera */
+    .casete-rojo {
+      position: absolute;
+      top: 106px;
+      left: 80px;
+      width: 140px;
+      height: 88px;
+      background-image: url('https://i.postimg.cc/9fWvpztK/casette-rojo-removebg-preview.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      z-index: 1; /* Detrás del reproductor camuflado */
+    }
+
+    /* LA FACHADA: La grabadora roja */
+    .grabadora-roja {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       background-image: url('https://i.postimg.cc/ncXV4Sc5/grabadora-roja-removebg-preview.png');
       background-size: contain;
       background-repeat: no-repeat;
       background-position: center;
+      z-index: 3;
+      pointer-events: none; /* Deja pasar los clics */
     }
 
-    /* LA CASANTERA / COMPARTIMENTO: El espacio físico de la compuerta */
-    .casetera-zone {
+    /* EL COSO DE SPOTIFY CAMUFLADO COMO TAPA DE PLÁSTICO */
+    .casetera-interactiva {
       position: absolute;
-      top: 102px; /* Centrado en el hueco de la compuerta */
-      left: 76px;
-      width: 148px;
-      height: 94px;
-      /* Entorno 3D interno */
-      transform-style: preserve-3d;
-    }
-
-    /* EL CASETE ROJO: Modificá los valores de abajo si querés moverlo de posición */
-    .casete {
-      position: absolute;
+      top: 110px;
+      left: 82px;
       width: 136px;
-      height: 84px;
-      background-image: url('https://i.postimg.cc/9fWvpztK/casette-rojo-removebg-preview.png');
-      background-size: contain;
-      background-repeat: no-repeat;
-      
-      /* AJUSTE DE POSICIÓN INICIAL */
-      left: 6px;
-      top: 5px;
-      
-      /* EL TRUCO REALISTA (Como tu foto de anime): 
-         Lo empujamos un poco hacia el fondo (translateZ) e inclinamos la parte 
-         superior hacia atrás (rotateX) para que calce en la ranura */
-      transform: translateZ(-15px) rotateX(-12deg);
-      
-      /* Ajuste de sombra para dar volumen dentro del hueco */
-      filter: drop-shadow(0px 4px 8px rgba(0, 0, 0, 0.6));
+      height: 80px;
+      z-index: 2; /* Sobre el casete, bajo el marco de la radio */
+      overflow: hidden;
+      border-radius: 4px;
+      opacity: 0.15; /* Súper transparente por defecto para integrarse con la casetera */
+      transition: opacity 0.3s ease;
+    }
+
+    /* Cuando pasás el mouse por el casete, se revela un poco más para que puedas clickear "Play" */
+    .casetera-interactiva:hover {
+      opacity: 0.85;
+    }
+
+    .casetera-interactiva iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    /* DISPLAY / PANTALLA: Para configurar la música */
+    .pantalla-digital {
+      position: absolute;
+      top: 108px;
+      left: 242px;
+      width: 130px;
+      height: 38px;
+      background: #0b0c0e;
+      border-radius: 3px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: #ff3333;
+      font-size: 9px;
+      font-family: monospace;
+      letter-spacing: 1px;
+      z-index: 4;
+    }
+
+    .input-link {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #0b0c0e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3px;
+      box-sizing: border-box;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .pantalla-digital:hover .input-link {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .input-link input {
+      width: 75%;
+      background: #111;
+      border: 1px solid #ff3333;
+      color: #ff3333;
+      font-size: 8px;
+      padding: 2px;
+    }
+
+    .input-link button {
+      background: #ff3333;
+      color: #000;
+      border: none;
+      font-size: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      padding: 2px 4px;
     }
   </style>
 </head>
 <body>
 
-  <div class="grabadora-container">
-    <!-- La casetera maneja la tridimensionalidad -->
-    <div class="casetera-zone">
-      <!-- El casete ahora descansa inclinado adentro, no flotando atrás -->
-      <div class="casete"></div>
+  <div class="widget-container">
+    
+    <!-- El casete de fondo en su ranura -->
+    <div class="casete-rojo"></div>
+
+    <!-- Tapa de casetera interactiva (Aquí vive Spotify camuflado) -->
+    <div class="casetera-interactiva">
+      <iframe id="reproductor" width="100%" height="80" frameBorder="0" allow="encrypted-media"></iframe>
     </div>
+
+    <!-- Imagen de la grabadora encima -->
+    <div class="grabadora-roja"></div>
+
+    <!-- Pantalla para pegar link -->
+    <div class="pantalla-digital">
+      <div id="textoStatus">TAPE READY</div>
+      <div class="input-link">
+        <input type="text" id="urlPlaylist" placeholder="Pegá link...">
+        <button onclick="guardarLink()">OK</button>
+      </div>
+    </div>
+
   </div>
 
+  <script>
+    const iframe = document.getElementById('reproductor');
+    const input = document.getElementById('urlPlaylist');
+    const status = document.getElementById('textoStatus');
+
+    window.onload = () => {
+      const guardado = localStorage.getItem('miPlaylist') || 'https://open.spotify.com/embed/playlist/37i9dQZF1DX4sWSpwq3LiO';
+      input.value = guardado;
+      cargarMusica(guardado);
+    };
+
+    function cargarMusica(url) {
+      if (url.includes("spotify.com")) {
+        iframe.src = url.replace("open.spotify.com/", "open.spotify.com/embed/");
+      } else {
+        iframe.src = url;
+      }
+    }
+
+    function guardarLink() {
+      const link = input.value.trim();
+      if (link) {
+        localStorage.setItem('miPlaylist', link);
+        cargarMusica(link);
+      }
+    }
+  </script>
 </body>
 </html>
