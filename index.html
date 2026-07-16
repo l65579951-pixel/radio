@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Casete Camuflado Spotify</title>
+    <title>Casetera Camuflada Spotify</title>
     <style>
         :root {
-            --bg-color: #f0ebe1;
-            --panel-color: #2c2c2c;
-            --deck-color: #1a1a1a;
-            --tape-body: #4a3b32;
-            --label-color: #f1f1f1;
+            --bg-color: #f4ebd9;
+            --panel-color: #2a2a2a;
+            --deck-color: #121212;
+            --tape-body: #3e322a;
+            --label-color: #e6e6e6;
             --text-color: #333;
             --widget-bg: #ffffff;
             --input-border: #ccc;
@@ -18,19 +18,19 @@
 
         [data-theme="dark"] {
             --bg-color: #121212;
-            --panel-color: #1e1e1e;
-            --deck-color: #0c0c0c;
-            --tape-body: #2c2420;
-            --label-color: #d1d1d1;
+            --panel-color: #1a1a1a;
+            --deck-color: #080808;
+            --tape-body: #251e1a;
+            --label-color: #cccccc;
             --text-color: #f1f1f1;
-            --widget-bg: #222222;
-            --input-border: #444;
+            --widget-bg: #1e1e1e;
+            --input-border: #333;
         }
 
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Courier New', Courier, monospace;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -43,13 +43,12 @@
 
         .container {
             width: 100%;
-            max-width: 450px;
+            max-width: 420px;
             background: var(--widget-bg);
-            padding: 20px;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            padding: 22px;
+            border-radius: 20px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.18);
             box-sizing: border-box;
-            position: relative;
         }
 
         .header {
@@ -59,55 +58,58 @@
             margin-bottom: 15px;
         }
 
-        /* CONFIGURACIÓN DE PLAYLIST */
         .setup-panel {
             display: flex;
             gap: 10px;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
 
         input[type="text"] {
             flex: 1;
-            padding: 10px;
-            border: 1px solid var(--input-border);
+            padding: 12px;
+            border: 2px solid var(--input-border);
             border-radius: 8px;
             background: var(--widget-bg);
             color: var(--text-color);
+            font-size: 0.9rem;
         }
 
         button.btn-save {
             background: #1DB954;
             color: white;
             border: none;
-            padding: 10px 15px;
+            padding: 0 18px;
             border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
+            font-size: 0.9rem;
         }
 
-        /* GRABADORA DE CASETE */
+        /* DISEÑO DE LA GRABADORA DE CASETE */
         .cassette-player {
             background-color: var(--panel-color);
-            border-radius: 12px;
+            border-radius: 16px;
             padding: 20px;
-            box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
-            position: relative; /* Clave para posicionar el iframe encima */
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.9), 0 8px 20px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
         }
 
         /* Ventana del Casete */
         .tape-deck {
             background-color: var(--deck-color);
             height: 140px;
-            border-radius: 8px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border: 4px solid #3d3d3d;
+            border: 4px solid #333;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
         }
 
         .cassette {
-            width: 220px;
-            height: 100px;
+            width: 230px;
+            height: 105px;
             background-color: var(--tape-body);
             border-radius: 6px;
             display: flex;
@@ -115,20 +117,22 @@
             justify-content: space-between;
             padding: 8px;
             box-sizing: border-box;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.6);
         }
 
         .cassette-label {
             background-color: var(--label-color);
-            height: 50px;
+            height: 55px;
             border-radius: 4px;
             display: flex;
             justify-content: space-around;
             align-items: center;
+            border-bottom: 3px solid #b5b5b5;
         }
 
         .reel {
-            width: 34px;
-            height: 34px;
+            width: 36px;
+            height: 36px;
             background-color: #111;
             border-radius: 50%;
             border: 3px dashed #fff;
@@ -145,65 +149,85 @@
             border-radius: 50%;
         }
 
-        /* BOTONES MECÁNICOS FACHADA */
-        .controls-wrapper {
-            position: relative; /* Contenedor para el truco de superposición */
-            margin-top: 20px;
-            height: 80px; /* Misma altura que el reproductor compacto de Spotify */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
-        .controls-background {
-            display: flex;
-            justify-content: space-between;
-            gap: 5px;
+        .spinning {
+            animation: spin 2.5s linear infinite;
+        }
+
+        /* CONTENEDOR MAESTRO DE CAMUFLAJE DE BOTONES */
+        .controls-wrapper {
+            position: relative;
+            margin-top: 25px;
+            height: 80px; /* Alto idéntico al widget de Spotify */
+            background-color: #222;
+            border-radius: 8px;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+
+        /* Capa 1 (ABAJO): El reproductor de Spotify REAL completamente oculto a la vista */
+        .spotify-iframe-container {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 1; /* Detrás del iframe invisible */
+            z-index: 1;
+            opacity: 0.001; /* Completamente invisible, pero interactivo para clics */
         }
 
-        .btn-mechanic {
-            flex: 1;
-            background: linear-gradient(180deg, #555, #222);
+        .spotify-iframe-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Capa 2 (ARRIBA): Botonera del Casete 100% visible */
+        /* Usamos pointer-events: none para que los clics del mouse la "atraviesen" */
+        .controls-overlay-facade {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none; /* MAGIA: El clic del ratón pasa a través de esta capa */
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0 10px;
+            box-sizing: border-box;
+        }
+
+        /* Botones Mecánicos de Fachada */
+        .btn-mechanic-visual {
+            width: 60px;
+            height: 50px;
+            background: linear-gradient(180deg, #666, #333);
             border: 1px solid #111;
-            border-radius: 4px;
-            color: #ddd;
-            font-size: 0.75rem;
+            border-radius: 6px;
+            color: #eee;
+            font-size: 0.65rem;
             font-weight: bold;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             box-shadow: 0 4px 0px #000;
+            text-shadow: 1px 1px 1px #000;
         }
 
-        /* EL TRUCO: EL IFRAME TOTALMENTE INVISIBLE ENCIMA DE LOS BOTONES */
-        .spotify-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 2; /* ENCIMA de los botones para capturar los clics */
-            opacity: 0; /* Totalmente invisible por defecto */
-            transition: opacity 0.2s;
-        }
-
-        /* CONTROLES DE CALIBRACIÓN (Solo para el dueño/desarrollador) */
-        .calibration-panel {
-            margin-top: 15px;
-            padding: 10px;
-            background: rgba(0, 0, 0, 0.05);
-            border-radius: 8px;
-            font-size: 0.8rem;
-        }
-
-        .calibration-panel label {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        /* Al ser pointer-events: none, no podemos usar :active directamente de forma normal,
+           pero mediante JS controlamos una clase para dar la sensación física al pulsar */
+        .btn-mechanic-visual.pressed-animation {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0px #000;
+            background: linear-gradient(180deg, #222, #111);
+            color: #1DB954; /* Brillo verde al activarse */
         }
     </style>
 </head>
@@ -211,65 +235,55 @@
 
 <div class="container">
     <div class="header">
-        <h2>Casete Inteligente</h2>
-        <button onclick="toggleTheme()" style="background:none; border:1px solid var(--text-color); color:var(--text-color); border-radius:12px; cursor:pointer; padding:2px 8px;">Tema</button>
+        <h3 style="margin: 0; letter-spacing: 1px;">AUTO-REVERSE</h3>
+        <button onclick="toggleTheme()" style="background:none; border:1px solid var(--text-color); color:var(--text-color); font-family:inherit; border-radius:12px; cursor:pointer; padding:2px 10px; font-size: 0.8rem;">TEMA</button>
     </div>
 
-    <!-- 1. ENLACE DE PLAYLIST -->
+    <!-- CARGADOR INTERNO DE PLAYLIST -->
     <div class="setup-panel">
-        <input type="text" id="playlist-input" placeholder="Pega el enlace de Spotify aquí">
-        <button class="btn-save" onclick="loadPlaylist()">Cargar</button>
+        <input type="text" id="playlist-input" placeholder="Pega tu enlace de Spotify aquí">
+        <button class="btn-save" onclick="loadPlaylist()">Grabar</button>
     </div>
 
-    <!-- REPRODUCTOR -->
+    <!-- LA CASETERA -->
     <div class="cassette-player">
         
-        <!-- Casete visual -->
+        <!-- Casete giratorio -->
         <div class="tape-deck">
             <div class="cassette">
                 <div style="height: 5px;"></div>
                 <div class="cassette-label">
                     <div class="reel" id="left-reel"></div>
-                    <div style="width: 40px; height: 8px; background: #222; border-radius: 4px;"></div>
+                    <div style="width: 45px; height: 6px; background: #111; border-radius: 3px;"></div>
                     <div class="reel" id="right-reel"></div>
                 </div>
-                <div style="height: 5px;"></div>
+                <div style="height: 5px; text-align: center; color: #777; font-size: 0.5rem;">DYNAMIC SOUND SYSTEM</div>
             </div>
         </div>
 
-        <!-- ZONA DE BOTONES (FACHADA + CAPA INVISIBLE DE SPOTIFY) -->
-        <div class="controls-wrapper">
+        <!-- ZONA DE CONTROLES CAMUFLADOS -->
+        <div class="controls-wrapper" id="interact-zone">
             
-            <!-- Botones estéticos detrás -->
-            <div class="controls-background">
-                <div class="btn-mechanic"><span>⏪</span><span>REW</span></div>
-                <!-- El botón de Play de Spotify suele estar en el centro/izquierda en el widget compacto -->
-                <div class="btn-mechanic" style="background: linear-gradient(180deg, #666, #333);"><span>▶/⏸</span><span>PLAY</span></div>
-                <div class="btn-mechanic"><span>⏩</span><span>F.F</span></div>
+            <!-- CAPA 1 (ABAJO): El reproductor real de Spotify (100% invisible) -->
+            <div class="spotify-iframe-container" id="spotify-container">
+                <!-- Se inyecta aquí -->
             </div>
 
-            <!-- Iframe de Spotify Invisible flotando exactamente encima -->
-            <div class="spotify-overlay" id="spotify-container">
-                <!-- Se genera aquí -->
+            <!-- CAPA 2 (ARRIBA): La botonera retro visible (Los clics la atraviesan) -->
+            <div class="controls-overlay-facade">
+                <div class="btn-mechanic-visual" id="vis-prev"><span>⏪</span><span>PREV</span></div>
+                <div class="btn-mechanic-visual" id="vis-play"><span>▶/⏸</span><span>PLAY</span></div>
+                <div class="btn-mechanic-visual" id="vis-next"><span>⏩</span><span>NEXT</span></div>
             </div>
+
         </div>
-    </div>
-
-    <!-- PANEL DE CALIBRACIÓN (Desliza para ver la magia) -->
-    <div class="calibration-panel">
-        <label>
-            <span>Ver Reproductor Real (Calibrar):</span>
-            <input type="range" id="opacity-slider" min="0" max="1" step="0.1" value="0" oninput="adjustOpacity(this.value)">
-        </label>
-        <p style="margin: 5px 0 0 0; font-size: 0.7rem; color: #777; text-align: center;">
-            Alinea tu clic. En 0% el Spotify real es invisible, ¡pero sigue siendo interactivo!
-        </p>
     </div>
 </div>
 
 <script>
-    // Playlist por defecto (puedes cambiarla por la tuya fija si quieres)
+    // Recupera la última playlist guardada en memoria
     let currentPlaylist = localStorage.getItem('lastPlaylist') || 'https://open.spotify.com/playlist/37i9dQZF1DXcBWIGv263vj';
+    let isPlaying = false;
 
     window.onload = () => {
         document.getElementById('playlist-input').value = currentPlaylist;
@@ -277,7 +291,55 @@
         
         const savedTheme = localStorage.getItem('theme') || 'light';
         document.documentElement.setAttribute('data-theme', savedTheme);
+
+        // --- SISTEMA INTELIGENTE DE DETECCIÓN ---
+        // Al hacer clic en la zona, el iframe invisible absorbe el clic. 
+        // Esto causa que la ventana principal pierda el foco ('blur').
+        window.addEventListener('blur', () => {
+            setTimeout(() => {
+                if (document.activeElement.tagName === 'IFRAME') {
+                    toggleCassetteAnimation();
+                }
+            }, 150);
+        });
+
+        // Eventos visuales simulados al hacer click en la zona de control
+        const interactZone = document.getElementById('interact-zone');
+        const playBtn = document.getElementById('vis-play');
+
+        interactZone.addEventListener('mousedown', () => {
+            playBtn.classList.add('pressed-animation');
+        });
+
+        interactZone.addEventListener('mouseup', () => {
+            setTimeout(() => {
+                if (!isPlaying) {
+                    playBtn.classList.remove('pressed-animation');
+                }
+            }, 250);
+        });
     };
+
+    function toggleCassetteAnimation() {
+        isPlaying = !isPlaying;
+        
+        const leftReel = document.getElementById('left-reel');
+        const rightReel = document.getElementById('right-reel');
+        const playBtn = document.getElementById('vis-play');
+
+        if (isPlaying) {
+            leftReel.classList.add('spinning');
+            rightReel.classList.add('spinning');
+            playBtn.classList.add('pressed-animation');
+        } else {
+            leftReel.classList.remove('spinning');
+            rightReel.classList.remove('spinning');
+            playBtn.classList.remove('pressed-animation');
+        }
+        
+        // Devolvemos el foco al documento para que el próximo clic vuelva a disparar el evento 'blur'
+        window.focus();
+    }
 
     function toggleTheme() {
         const currentTheme = document.documentElement.getAttribute('data-theme');
@@ -286,7 +348,6 @@
         localStorage.setItem('theme', newTheme);
     }
 
-    // Convierte el link normal a formato Embed
     function cleanSpotifyUrl(url) {
         if (!url) return '';
         if (url.includes('spotify.com') && !url.includes('/embed')) {
@@ -300,16 +361,15 @@
         const cleanUrl = cleanSpotifyUrl(url);
         
         if (cleanUrl) {
-            // Usamos el reproductor compacto de Spotify (80px de alto)
             container.innerHTML = `
                 <iframe 
+                    id="spotify-iframe"
                     src="${cleanUrl}?utm_source=generator&theme=0" 
                     width="100%" 
                     height="80" 
                     frameBorder="0" 
                     allowfullscreen="" 
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
-                    style="border-radius: 4px;">
+                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture">
                 </iframe>`;
         }
     }
@@ -320,13 +380,11 @@
             currentPlaylist = inputVal;
             localStorage.setItem('lastPlaylist', currentPlaylist);
             buildSpotifyIframe(currentPlaylist);
+            
+            // Reiniciar animación del casete al meter una cinta nueva
+            isPlaying = false;
+            toggleCassetteAnimation();
         }
-    }
-
-    // Control de transparencia para calibración
-    function adjustOpacity(value) {
-        const spotify = document.getElementById('spotify-container');
-        spotify.style.opacity = value;
     }
 </script>
 
