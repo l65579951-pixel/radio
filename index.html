@@ -3,442 +3,603 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Retro Tape Deck Player</title>
+    <title>Grabadora de Casete Retro Profesional</title>
     <style>
         :root {
-            --bg-color: #e6e4dc;
-            --text-color: #2b2b2b;
-            --panel-bg: #d4cfb9;
-            --border-color: #b8b194;
-            --accent-color: #d62828;
+            --bg-color: #0f0f12;
+            --panel-bg: #1c1a24;
+            --panel-border: #3c354a;
+            --text-color: #f3f0f7;
+            --accent-color: #ff3c3c;
         }
 
-        [data-theme="dark"] {
-            --bg-color: #121212;
-            --text-color: #f0f0f0;
-            --panel-bg: #1e1e1e;
-            --border-color: #333;
-            --accent-color: #ff3b30;
+        [data-theme="light"] {
+            --bg-color: #f0edf5;
+            --panel-bg: #e2dde8;
+            --panel-border: #b8afc4;
+            --text-color: #231f2b;
+            --accent-color: #d61c1c;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Courier New', Courier, monospace;
+            transition: background-color 0.3s, border-color 0.3s, color 0.3s;
         }
 
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
-            padding: 0;
+            padding: 20px;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            transition: background-color 0.3s;
-            overflow: hidden;
         }
 
-        /* CONTENEDOR DE LA GRABADORA */
-        .grabadora-wrapper {
+        .widget-container {
+            width: 100%;
+            max-width: 550px;
+            background: var(--panel-bg);
+            border: 4px solid var(--panel-border);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* DISEÑO DE LA FACHADA FISICA CON LA IMAGEN */
+        .deck-wrapper {
             position: relative;
-            width: 550px;
-            height: 550px;
+            width: 100%;
+            aspect-ratio: 1.5; /* Ajuste para calzar perfecto con la imagen de la grabadora */
+            background-image: url('https://i.postimg.cc/ncXV4Sc5/grabadora-roja-removebg-preview.png');
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            overflow: hidden;
+            border-radius: 12px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        /* COMPORTAMIENTO DE INSERCIÓN DEL CASETTE (Estilo Anime GIF) */
+        .cassette-slot {
+            position: absolute;
+            top: 25%;
+            left: 21%;
+            width: 58%;
+            height: 48%;
+            perspective: 800px;
             display: flex;
             justify-content: center;
             align-items: center;
-        }
-
-        .grabadora-img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
             pointer-events: none;
-            z-index: 1;
         }
 
-        /* COMPARTIMENTO INTERNO REAL (Ubicado justo sobre la casetera física de tu imagen) */
-        .cassette-deck {
-            position: absolute;
-            width: 106px;
-            height: 62px;
-            left: 222px;
-            top: 254px;
-            overflow: hidden;
-            border-radius: 4px;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 2;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.9);
-        }
-
-        /* EL CASSETE INTERNO QUE SE AJUSTA A LA PERFECCIÓN */
-        .cassette-tape {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background-image: url('https://i.postimg.cc/9fWvpztK/casette-rojo-removebg-preview.png');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-            top: -70px; /* Escondido arriba para bajar al cargar */
-            transition: top 0.6s cubic-bezier(0.25, 1, 0.5, 1);
-            z-index: 3;
-        }
-
-        .cassette-tape.inserted {
-            top: 0px;
-        }
-
-        /* PEQUEÑOS ENGRANAJES DE GIRO EN LOS ORIFICIOS DEL CASSETE */
-        .reel-gear {
-            position: absolute;
-            width: 12px;
-            height: 12px;
-            border: 2px dotted #ffaa00;
-            border-radius: 50%;
-            background: #000;
-            top: 25px;
-            z-index: 4;
+        .cassette-image {
+            width: 82%;
+            height: auto;
+            content: url('https://i.postimg.cc/9fWvpztK/casette-rojo-removebg-preview.png');
             opacity: 0;
-            transition: opacity 0.3s;
+            transform: translateY(-120px) rotateX(45deg) rotateY(15deg) scale(0.8);
+            transition: all 0.9s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 2;
+            filter: drop-shadow(0 15px 15px rgba(0,0,0,0.6));
         }
 
-        .cassette-tape.inserted ~ .reel-gear {
-            opacity: 0.9;
+        /* Clase activada cuando hay música "insertada" */
+        .cassette-slot.inserted .cassette-image {
+            opacity: 1;
+            transform: translateY(0px) rotateX(0deg) rotateY(0deg) scale(1);
         }
 
-        .reel-left { left: 34px; }
-        .reel-right { left: 60px; }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .spinning {
-            animation: spin 3s linear infinite;
-        }
-
-        /* BOTÓN FLOTANTE PARA ABRIR/CERRAR LA CONFIGURACIÓN */
-        .settings-toggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
+        /* Engranajes rotatorios superpuestos digitalmente */
+        .reel-overlay {
+            position: absolute;
             width: 45px;
             height: 45px;
             border-radius: 50%;
-            background: var(--panel-bg);
-            border: 2px solid var(--border-color);
-            color: var(--text-color);
-            font-size: 1.2rem;
+            border: 4px dashed #111;
+            opacity: 0;
+            transition: opacity 0.5s;
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        .reel-overlay.active {
+            opacity: 0.6;
+        }
+
+        .reel-left-overlay {
+            top: 45%;
+            left: 37%;
+        }
+
+        .reel-right-overlay {
+            top: 45%;
+            left: 55%;
+        }
+
+        @keyframes spin-cw {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        @keyframes spin-ccw {
+            from { transform: rotate(360deg); }
+            to { transform: rotate(0deg); }
+        }
+
+        .spin-play { animation: spin-cw 2.5s linear infinite; }
+        .spin-ff { animation: spin-cw 0.4s linear infinite; }
+        .spin-rew { animation: spin-ccw 0.4s linear infinite; }
+
+        /* BOTONES FISICOS INVISIBLES SOBRE LA GRABADORA */
+        .invisible-btn-deck {
+            position: absolute;
+            bottom: 4%;
+            left: 15%;
+            width: 70%;
+            height: 14%;
+            display: flex;
+            gap: 2%;
+        }
+
+        .inv-btn {
+            flex: 1;
+            background: rgba(255, 0, 0, 0.0); /* Cambia temporalmente el 0.0 por 0.1 si quieres ver las zonas de toque */
+            border: none;
             cursor: pointer;
+            border-radius: 4px;
+        }
+        .inv-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        .inv-btn:active {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        /* PANTALLA DIGITAL DE INFORMACIÓN */
+        .digital-display {
+            position: absolute;
+            top: 6%;
+            left: 21%;
+            width: 58%;
+            background: rgba(0, 0, 0, 0.85);
+            border: 1px solid #ff3c3c;
+            color: #00ff66;
+            font-family: monospace;
+            font-size: 0.75rem;
+            padding: 4px 10px;
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-            z-index: 100;
+            border-radius: 4px;
+            box-shadow: inset 0 0 8px rgba(0, 255, 102, 0.3);
         }
 
-        /* PANEL COLAPSABLE DESLIZABLE */
-        .settings-panel {
-            position: fixed;
-            bottom: -400px; /* Oculto abajo por defecto */
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            max-width: 500px;
-            background: var(--panel-bg);
-            border: 3px solid var(--border-color);
-            border-radius: 16px 16px 0 0;
-            padding: 20px;
-            box-shadow: 0 -10px 30px rgba(0,0,0,0.2);
-            transition: bottom 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-            z-index: 99;
+        .led-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #2b1111;
+        }
+        .led-indicator.active {
+            background: #ff0000;
+            box-shadow: 0 0 10px #ff0000;
         }
 
-        .settings-panel.open {
-            bottom: 0;
+        /* SECCIÓN DE CONFIGURACIÓN */
+        .config-section {
+            background: rgba(0,0,0,0.25);
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid var(--panel-border);
         }
 
-        .panel-row {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            align-items: center;
+        .input-group {
+            margin-bottom: 12px;
         }
-
-        .input-box {
-            flex-grow: 1;
+        .input-group:last-child {
+            margin-bottom: 0;
         }
 
         label {
             display: block;
             font-size: 0.75rem;
             font-weight: bold;
-            margin-bottom: 5px;
+            margin-bottom: 6px;
             text-transform: uppercase;
             color: var(--text-color);
         }
 
+        .input-inline {
+            display: flex;
+            gap: 8px;
+        }
+
         .text-input {
-            width: 100%;
-            background: rgba(0,0,0,0.1);
-            border: 1px solid var(--border-color);
-            color: var(--text-color);
+            flex-grow: 1;
+            background: #09090b;
+            border: 1px solid var(--panel-border);
+            color: #fff;
             padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 0.85rem;
-        }
-
-        .dropzone {
-            border: 2px dashed var(--border-color);
-            background: rgba(0,0,0,0.05);
-            padding: 10px;
-            text-align: center;
+            border-radius: 6px;
             font-size: 0.8rem;
-            border-radius: 8px;
-            cursor: pointer;
         }
 
-        /* BOTONES DEL PANEL */
-        .btn-action {
-            background: var(--border-color);
-            color: var(--text-color);
+        .action-btn {
+            background: var(--panel-border);
             border: none;
-            padding: 8px 14px;
-            border-radius: 8px;
+            color: var(--text-color);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
             font-weight: bold;
             cursor: pointer;
-            font-size: 0.8rem;
         }
-
-        .btn-action.active {
+        .action-btn:hover {
             background: var(--accent-color);
             color: #fff;
         }
 
-        /* IFRAME INVISIBLE DE SPOTIFY (SÓLO PARA AUDIO) */
-        .spotify-hidden-iframe {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            opacity: 0;
-            pointer-events: none;
+        .file-dropzone {
+            border: 2px dashed var(--panel-border);
+            border-radius: 6px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            background: rgba(0,0,0,0.1);
+            font-size: 0.75rem;
+        }
+        .file-dropzone:hover {
+            border-color: var(--accent-color);
+        }
+        #file-input { display: none; }
+
+        /* CAMUFLAJE DE SPOTIFY */
+        .spotify-container {
+            margin-top: 10px;
+            width: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid var(--panel-border);
+        }
+
+        .header-widget {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
         }
     </style>
 </head>
 <body>
 
-    <!-- BOTÓN DE AJUSTES -->
-    <button class="settings-toggle" id="toggle-panel" title="Configurar Radio">⚙️</button>
+<div class="widget-container">
+    <div class="header-widget">
+        <span style="font-size: 0.9rem; font-weight: bold;">RED DECK SYSTEM</span>
+        <button class="action-btn" id="theme-btn">🌗 TEMA</button>
+    </div>
 
-    <!-- GRABADORA PRINCIPAL -->
-    <div class="grabadora-wrapper">
-        <img class="grabadora-img" src="https://i.postimg.cc/ncXV4Sc5/grabadora-roja-removebg-preview.png" alt="Grabadora">
-        
-        <!-- Casetera física mimetizada -->
-        <div class="cassette-deck">
-            <div class="cassette-tape" id="tape"></div>
-            <div class="reel-gear reel-left" id="gear-l"></div>
-            <div class="reel-gear reel-right" id="gear-r"></div>
+    <!-- CUBIERTA FÍSICA SUPERPUESTA -->
+    <div class="deck-wrapper">
+        <!-- Display digital incrustado en el diseño -->
+        <div class="digital-display">
+            <span id="display-text">NO CASSETTE LOADED</span>
+            <div class="led-indicator" id="status-led"></div>
+        </div>
+
+        <!-- Ranura con compuerta de casete y animación de empuje en 3D -->
+        <div class="cassette-slot" id="cassette-slot">
+            <div class="cassette-image"></div>
+            <!-- Engranajes virtuales dinámicos -->
+            <div class="reel-overlay reel-left-overlay" id="reel-left"></div>
+            <div class="reel-overlay reel-right-overlay" id="reel-right"></div>
+        </div>
+
+        <!-- Botonera Invisible colocada exactamente sobre las teclas físicas rojas -->
+        <div class="invisible-btn-deck">
+            <button class="inv-btn" id="btn-rew" title="Retroceso rápido"></button>
+            <button class="inv-btn" id="btn-play" title="Reproducir"></button>
+            <button class="inv-btn" id="btn-pause" title="Pausar"></button>
+            <button class="inv-btn" id="btn-ff" title="Avance rápido"></button>
+            <button class="inv-btn" id="btn-eject" title="Expulsar cinta"></button>
         </div>
     </div>
 
-    <!-- PANEL FLOTANTE DE AJUSTES -->
-    <div class="settings-panel" id="panel">
-        <div class="panel-row">
-            <div class="input-box">
-                <label>1. Enlace de Playlist Spotify</label>
-                <input type="text" class="text-input" id="spotify-input" placeholder="Pegá el link de tu playlist...">
+    <!-- PANEL DE CONTROL TRASERO / AJUSTES -->
+    <div class="config-section">
+        <div class="input-group">
+            <label>Sintonizar Bypass Analógico</label>
+            <div class="input-inline">
+                <button class="action-btn" style="flex:1" id="bypass-btn">📟 ENCENDER RUIDO DE CINTA</button>
+                <button class="action-btn" style="flex:1; display:none; background:#ff3c3c; color:white;" id="cancel-bypass-btn">❌ APAGAR BYPASS</button>
             </div>
-            <button class="btn-action active" id="btn-bypass">BYPASS: SÍ</button>
         </div>
 
-        <div class="panel-row">
-            <div class="input-box">
-                <label>2. Cargar Música Local</label>
-                <div class="dropzone" id="dropzone">📁 Haz clic o arrastra tu MP3 acá</div>
-                <input type="file" id="file-input" accept="audio/*" style="display: none;">
+        <div class="input-group">
+            <label>1. Playlist de Spotify (Fachada)</label>
+            <div class="input-inline">
+                <input type="text" class="text-input" id="spotify-link" placeholder="Pega enlace de Spotify..." />
+                <button class="action-btn" id="save-playlist-btn">💾 GUARDAR</button>
             </div>
-            <button class="btn-action" id="btn-theme">TEMA 🌗</button>
         </div>
 
-        <div class="panel-row" style="justify-content: flex-end; gap: 10px;">
-            <button class="btn-action" id="btn-play">PLAY ▶️</button>
-            <button class="btn-action" id="btn-pause">PAUSE ⏸️</button>
-            <button class="btn-action" id="btn-eject">EJECT ⏏️</button>
+        <div class="input-group">
+            <label>2. Archivo Local (.MP3) - Sin problemas de CORS</label>
+            <div class="file-dropzone" id="dropzone">📁 Arrastra o selecciona música local</div>
+            <input type="file" id="file-input" accept="audio/*">
+        </div>
+
+        <div class="input-group">
+            <label>Volumen General</label>
+            <input type="range" class="vol-slider" style="width:100%" id="volume-control" min="0" max="1" step="0.05" value="0.5">
         </div>
     </div>
 
-    <!-- Iframe invisible para procesar Spotify -->
-    <iframe class="spotify-hidden-iframe" id="sp-iframe" src="" allow="encrypted-media"></iframe>
+    <!-- CAMUFLAJE SPOTIFY -->
+    <div class="spotify-container" id="spotify-container">
+        <iframe id="spotify-iframe" width="100%" height="80" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+    </div>
+</div>
 
 <script>
-    // Variables de audio
-    let audioCtx = null;
-    let noiseSource = null;
-    let localMp3 = new Audio();
+    let audioContext = null;
+    let noiseNode = null;
+    let localAudio = new Audio();
     let isPlaying = false;
-    let mode = 'analog'; // 'analog', 'spotify', 'local'
-    let bypass = true;
+    let currentMode = 'none'; // 'none' | 'analog' | 'local' | 'spotify'
+    let spinState = '';
 
-    // Elementos DOM
-    const panel = document.getElementById('panel');
-    const togglePanel = document.getElementById('toggle-panel');
-    const tape = document.getElementById('tape');
-    const gearL = document.getElementById('gear-l');
-    const gearR = document.getElementById('gear-r');
+    const cassetteSlot = document.getElementById('cassette-slot');
+    const reelLeft = document.getElementById('reel-left');
+    const reelRight = document.getElementById('reel-right');
+    const displayText = document.getElementById('display-text');
+    const statusLed = document.getElementById('status-led');
     
-    const spotifyInput = document.getElementById('spotify-input');
-    const spIframe = document.getElementById('sp-iframe');
-    
-    const fileInput = document.getElementById('file-input');
-    const dropzone = document.getElementById('dropzone');
-
-    const btnBypass = document.getElementById('btn-bypass');
-    const btnTheme = document.getElementById('btn-theme');
+    // Botonera invisible
     const btnPlay = document.getElementById('btn-play');
     const btnPause = document.getElementById('btn-pause');
+    const btnRew = document.getElementById('btn-rew');
+    const btnFF = document.getElementById('btn-ff');
     const btnEject = document.getElementById('btn-eject');
 
-    // --- PANEL DESLIZANTE ---
-    togglePanel.addEventListener('click', () => {
-        panel.classList.toggle('open');
-    });
+    // Paneles traseros
+    const bypassBtn = document.getElementById('bypass-btn');
+    const cancelBypassBtn = document.getElementById('cancel-bypass-btn');
+    const spotifyLink = document.getElementById('spotify-link');
+    const spotifyIframe = document.getElementById('spotify-iframe');
+    const savePlaylistBtn = document.getElementById('save-playlist-btn');
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('file-input');
+    const volumeControl = document.getElementById('volume-control');
+    const themeBtn = document.getElementById('theme-btn');
 
-    // --- MEMORIA DE PLAYLIST ---
-    const savedPlaylist = localStorage.getItem('last_saved_playlist');
+    // Cargar playlist inicial guardada
+    const savedPlaylist = localStorage.getItem('cassette_playlist');
     if (savedPlaylist) {
-        spotifyInput.value = savedPlaylist;
-        cargarSpotify(savedPlaylist);
-    } else {
-        setBypass(true);
+        spotifyLink.value = savedPlaylist;
+        updateSpotifyIframe(savedPlaylist);
     }
 
-    // --- DETECTAR Y CARGAR SPOTIFY ---
-    spotifyInput.addEventListener('input', (e) => {
-        cargarSpotify(e.target.value);
+    // Guardar playlist
+    savePlaylistBtn.addEventListener('click', () => {
+        const link = spotifyLink.value;
+        if (link) {
+            localStorage.setItem('cassette_playlist', link);
+            updateSpotifyIframe(link);
+            insertCassetteAnimation("SPOTIFY READY");
+        }
     });
 
-    function cargarSpotify(url) {
-        if (!url.includes('spotify.com')) return;
-        localStorage.setItem('last_saved_playlist', url);
-        
-        let embed = url;
-        if (!url.includes('/embed')) {
-            embed = url.replace('spotify.com/', 'spotify.com/embed/');
-        }
-        spIframe.src = embed;
-        
-        setBypass(false);
-        mode = 'spotify';
-        tape.classList.add('inserted');
-    }
-
-    // --- CAMBIAR TEMA ---
-    btnTheme.addEventListener('click', () => {
-        const theme = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    // Cambiar tema visual
+    themeBtn.addEventListener('click', () => {
+        const theme = document.body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
         document.body.setAttribute('data-theme', theme);
     });
 
-    // --- MODO BYPASS / RUIDO RETRO ---
-    btnBypass.addEventListener('click', () => {
-        setBypass(!bypass);
-    });
-
-    function setBypass(state) {
-        bypass = state;
-        if (bypass) {
-            btnBypass.classList.add('active');
-            btnBypass.textContent = "BYPASS: SÍ";
-            mode = 'analog';
-            tape.classList.add('inserted');
-        } else {
-            btnBypass.classList.remove('active');
-            btnBypass.textContent = "BYPASS: NO";
-            stopNoise();
-            if (mode === 'analog') {
-                mode = 'none';
-                tape.classList.remove('inserted');
-            }
+    function updateSpotifyIframe(url) {
+        if (!url) return;
+        let embedUrl = url;
+        if (url.includes('spotify.com') && !url.includes('/embed')) {
+            embedUrl = url.replace('spotify.com/', 'spotify.com/embed/');
         }
+        spotifyIframe.src = embedUrl;
+        currentMode = 'spotify';
     }
 
-    // --- ARCHIVOS LOCALES MP3 ---
+    // Subida de archivos
     dropzone.addEventListener('click', () => fileInput.click());
-    fileInput.addEventListener('change', (e) => {
-        if (e.target.files.length > 0) {
-            const fileUrl = URL.createObjectURL(e.target.files[0]);
-            localMp3.src = fileUrl;
-            setBypass(false);
-            mode = 'local';
-            tape.classList.add('inserted');
-            ejecutarPlay();
-        }
+    dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.style.borderColor = 'var(--accent-color)'; });
+    dropzone.addEventListener('dragleave', () => dropzone.style.borderColor = 'var(--panel-border)');
+    dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.style.borderColor = 'var(--panel-border)';
+        if (e.dataTransfer.files.length > 0) loadLocalFile(e.dataTransfer.files[0]);
     });
 
-    // --- GENERADOR DE RUIDO DE CINTA ANALÓGICO ---
-    function playNoise() {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) loadLocalFile(e.target.files[0]);
+    });
 
-        const bufferSize = 2 * audioCtx.sampleRate;
-        const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    function loadLocalFile(file) {
+        const objectURL = URL.createObjectURL(file);
+        localAudio.src = objectURL;
+        currentMode = 'local';
+        insertCassetteAnimation(file.name);
+        playAudio();
+    }
+
+    // Animación de inserción 3D de la casete
+    function insertCassetteAnimation(text) {
+        cassetteSlot.classList.remove('inserted');
+        setTimeout(() => {
+            cassetteSlot.classList.add('inserted');
+            displayText.textContent = text.toUpperCase();
+        }, 150);
+    }
+
+    // SINTETIZADOR DE SONIDO ANALÓGICO
+    function initAudioContext() {
+        if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    function startAnalogNoise() {
+        initAudioContext();
+        if (audioContext.state === 'suspended') audioContext.resume();
+
+        const bufferSize = 2 * audioContext.sampleRate;
+        const noiseBuffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
         const output = noiseBuffer.getChannelData(0);
-        
+
+        let b0 = 0.0, b1 = 0.0, b2 = 0.0, b3 = 0.0, b4 = 0.0, b5 = 0.0, b6 = 0.0;
         for (let i = 0; i < bufferSize; i++) {
-            output[i] = (Math.random() * 2 - 1) * 0.012; // Suave siseo vintage
+            const white = Math.random() * 2 - 1;
+            b0 = 0.99886 * b0 + white * 0.0555179;
+            b1 = 0.99332 * b1 + white * 0.0750759;
+            b2 = 0.96900 * b2 + white * 0.1538520;
+            b3 = 0.86650 * b3 + white * 0.3104856;
+            b4 = 0.55000 * b4 + white * 0.5329522;
+            b5 = -0.7616 * b5 - white * 0.0168980;
+            output[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
+            output[i] *= 0.11;
+            b6 = white * 0.115926;
         }
 
-        noiseSource = audioCtx.createBufferSource();
-        noiseSource.buffer = noiseBuffer;
-        noiseSource.loop = true;
-        noiseSource.connect(audioCtx.destination);
-        noiseSource.start(0);
+        noiseNode = audioContext.createBufferSource();
+        noiseNode.buffer = noiseBuffer;
+        noiseNode.loop = true;
+
+        const filterNode = audioContext.createBiquadFilter();
+        filterNode.type = 'bandpass';
+        filterNode.frequency.value = 1000;
+        filterNode.Q.value = 0.5;
+
+        const gainNode = audioContext.createGain();
+        gainNode.gain.value = volumeControl.value * 0.1;
+
+        noiseNode.connect(filterNode);
+        filterNode.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        noiseNode.start(0);
     }
 
-    function stopNoise() {
-        if (noiseSource) {
-            try { noiseSource.stop(); } catch(e) {}
-            noiseSource = null;
+    function stopAnalogNoise() {
+        if (noiseNode) {
+            try { noiseNode.stop(); } catch(e) {}
+            noiseNode = null;
         }
     }
 
-    // --- CONTROLES DE REPRODUCCIÓN ---
-    function ejecutarPlay() {
-        if (mode === 'none') return;
+    // CONTROLADORES DE ANIMACIÓN Y AUDIO
+    function updateReelOverlayAnimation(state) {
+        spinState = state;
+        reelLeft.className = 'reel-overlay reel-left-overlay';
+        reelRight.className = 'reel-overlay reel-right-overlay';
+
+        if (state) {
+            reelLeft.classList.add('active', 'spin-' + state);
+            reelRight.classList.add('active', 'spin-' + state);
+        }
+    }
+
+    function playAudio() {
+        if (currentMode === 'none') {
+            displayText.textContent = "INSERTE CINTA O SPOTIFY";
+            return;
+        }
         isPlaying = true;
-        gearL.classList.add('spinning');
-        gearR.classList.add('spinning');
+        statusLed.classList.add('active');
 
-        if (mode === 'analog') {
-            playNoise();
-        } else if (mode === 'local') {
-            localMp3.play();
-        } else if (mode === 'spotify') {
-            // Activa el play indirecto de Spotify
-            spIframe.contentWindow.postMessage({command: 'toggle'}, '*');
+        if (currentMode === 'local') {
+            localAudio.play();
+            updateReelOverlayAnimation('play');
+        } else if (currentMode === 'analog') {
+            startAnalogNoise();
+            updateReelOverlayAnimation('play');
+            displayText.textContent = "SINTETIZADOR ACTIVO";
+        } else if (currentMode === 'spotify') {
+            updateReelOverlayAnimation('play');
+            displayText.textContent = "SPOTIFY REPRODUCIENDO...";
         }
     }
 
-    function ejecutarPause() {
+    function pauseAudio() {
         isPlaying = false;
-        gearL.classList.remove('spinning');
-        gearR.classList.remove('spinning');
+        statusLed.classList.remove('active');
+        updateReelOverlayAnimation('');
 
-        if (mode === 'analog') {
-            stopNoise();
-        } else if (mode === 'local') {
-            localMp3.pause();
+        if (currentMode === 'local') {
+            localAudio.pause();
+        } else if (currentMode === 'analog') {
+            stopAnalogNoise();
         }
+        displayText.textContent = "PAUSADO";
     }
 
-    btnPlay.addEventListener('click', ejecutarPlay);
-    btnPause.addEventListener('click', ejecutarPause);
+    // ACCIONES DE BOTONERA INVISIBLE
+    btnPlay.addEventListener('click', playAudio);
+    btnPause.addEventListener('click', pauseAudio);
+
+    btnFF.addEventListener('click', () => {
+        if (!isPlaying) return;
+        updateReelOverlayAnimation('ff');
+        if (currentMode === 'local') localAudio.currentTime += 10;
+        displayText.textContent = "AVANZANDO...";
+    });
+
+    btnRew.addEventListener('click', () => {
+        if (!isPlaying) return;
+        updateReelOverlayAnimation('rew');
+        if (currentMode === 'local') localAudio.currentTime -= 10;
+        displayText.textContent = "REBOBINANDO...";
+    });
 
     btnEject.addEventListener('click', () => {
-        ejecutarPause();
-        tape.classList.remove('inserted');
-        spIframe.src = "";
-        spotifyInput.value = "";
-        localStorage.removeItem('last_saved_playlist');
-        mode = 'none';
+        pauseAudio();
+        cassetteSlot.classList.remove('inserted');
+        displayText.textContent = "TAPE EJECTED";
+        currentMode = 'none';
+        localAudio.src = '';
+    });
+
+    // BOTONES DE BYPASS
+    bypassBtn.addEventListener('click', () => {
+        currentMode = 'analog';
+        bypassBtn.style.display = 'none';
+        cancelBypassBtn.style.display = 'block';
+        insertCassetteAnimation("BYPASS ANALÓGICO");
+        playAudio();
+    });
+
+    cancelBypassBtn.addEventListener('click', () => {
+        stopAnalogNoise();
+        bypassBtn.style.display = 'block';
+        cancelBypassBtn.style.display = 'none';
+        
+        if (localAudio.src && localAudio.src !== window.location.href) {
+            currentMode = 'local';
+            displayText.textContent = "MÚSICA LOCAL";
+        } else if (spotifyLink.value) {
+            currentMode = 'spotify';
+            displayText.textContent = "SPOTIFY READY";
+        } else {
+            currentMode = 'none';
+            cassetteSlot.classList.remove('inserted');
+            displayText.textContent = "NO CASSETTE LOADED";
+        }
+    });
+
+    volumeControl.addEventListener('input', (e) => {
+        localAudio.volume = e.target.value;
+        if (isPlaying && currentMode === 'analog') {
+            stopAnalogNoise();
+            startAnalogNoise();
+        }
     });
 </script>
 </body>
