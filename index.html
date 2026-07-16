@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Grabadora Roja Funcional</title>
+  <title>Grabadora Roja Retro</title>
   <style>
     :root {
       --bg-color: #f4f4f5;
@@ -30,7 +30,7 @@
       height: 320px;
     }
 
-    /* EL CASETE ROJO: Centrado y ubicado en la casetera */
+    /* EL CASETE ROJO: Clavado perfecto en su ranura, sin flotar en el limbo */
     .casete-rojo {
       position: absolute;
       top: 106px;
@@ -40,10 +40,10 @@
       background-image: url('https://i.postimg.cc/9fWvpztK/casette-rojo-removebg-preview.png');
       background-size: contain;
       background-repeat: no-repeat;
-      z-index: 1; /* Detrás del reproductor camuflado */
+      z-index: 1; /* Detrás del marco frontal */
     }
 
-    /* LA FACHADA: La grabadora roja */
+    /* LA FACHADA: La grabadora roja tapa todo */
     .grabadora-roja {
       position: absolute;
       top: 0;
@@ -54,36 +54,36 @@
       background-size: contain;
       background-repeat: no-repeat;
       background-position: center;
-      z-index: 3;
-      pointer-events: none; /* Deja pasar los clics */
+      z-index: 2;
+      pointer-events: none; /* Deja pasar los clics hacia los botones invisibles */
     }
 
-    /* EL COSO DE SPOTIFY CAMUFLADO COMO TAPA DE PLÁSTICO */
-    .casetera-interactiva {
+    /* EL ENGAÑO VISUAL: 
+       Este contenedor se ubica JUSTO encima del botón físico de "PLAY" de la grabadora.
+       Adentro tiene el reproductor de Spotify invisible, alineando su Play nativo con el nuestro. */
+    .click-trap-play {
       position: absolute;
-      top: 110px;
-      left: 82px;
-      width: 136px;
-      height: 80px;
-      z-index: 2; /* Sobre el casete, bajo el marco de la radio */
+      top: 48px;  /* Altura de las teclas físicas */
+      left: 108px; /* Posición exacta de la tecla PLAY */
+      width: 25px;
+      height: 25px;
       overflow: hidden;
-      border-radius: 4px;
-      opacity: 0.15; /* Súper transparente por defecto para integrarse con la casetera */
-      transition: opacity 0.3s ease;
+      z-index: 10; /* Al frente de todo para recibir el clic */
+      border-radius: 50%;
     }
 
-    /* Cuando pasás el mouse por el casete, se revela un poco más para que puedas clickear "Play" */
-    .casetera-interactiva:hover {
-      opacity: 0.85;
-    }
-
-    .casetera-interactiva iframe {
-      width: 100%;
-      height: 100%;
+    /* El iframe está oculto a la vista (opacity: 0) pero sigue siendo clickeable */
+    .click-trap-play iframe {
+      position: absolute;
+      top: -27px;  /* Desplazamiento para que el botón de Spotify coincida con el botón rojo */
+      left: -16px;
+      width: 80px;
+      height: 80px;
+      opacity: 0.001; /* Completamente invisible, pero detectable para el mouse */
       border: none;
     }
 
-    /* DISPLAY / PANTALLA: Para configurar la música */
+    /* PANTALLA DIGITAL (Para configurar tu música) */
     .pantalla-digital {
       position: absolute;
       top: 108px;
@@ -100,7 +100,7 @@
       font-size: 9px;
       font-family: monospace;
       letter-spacing: 1px;
-      z-index: 4;
+      z-index: 5;
     }
 
     .input-link {
@@ -149,20 +149,20 @@
 
   <div class="widget-container">
     
-    <!-- El casete de fondo en su ranura -->
+    <!-- 1. El casete rojo en su ranura -->
     <div class="casete-rojo"></div>
 
-    <!-- Tapa de casetera interactiva (Aquí vive Spotify camuflado) -->
-    <div class="casetera-interactiva">
-      <iframe id="reproductor" width="100%" height="80" frameBorder="0" allow="encrypted-media"></iframe>
+    <!-- 2. El "Engaño Visual": Botón invisible sobre la tecla PLAY física -->
+    <div class="click-trap-play">
+      <iframe id="reproductor" src="" allow="encrypted-media"></iframe>
     </div>
 
-    <!-- Imagen de la grabadora encima -->
+    <!-- 3. Frente de la Grabadora -->
     <div class="grabadora-roja"></div>
 
-    <!-- Pantalla para pegar link -->
+    <!-- Pantalla para meter tu link de Spotify -->
     <div class="pantalla-digital">
-      <div id="textoStatus">TAPE READY</div>
+      <div id="textoStatus">NO LINK</div>
       <div class="input-link">
         <input type="text" id="urlPlaylist" placeholder="Pegá link...">
         <button onclick="guardarLink()">OK</button>
@@ -176,14 +176,21 @@
     const input = document.getElementById('urlPlaylist');
     const status = document.getElementById('textoStatus');
 
+    // Carga de playlist guardada, NO hay nada por defecto
     window.onload = () => {
-      const guardado = localStorage.getItem('miPlaylist') || 'https://open.spotify.com/embed/playlist/37i9dQZF1DX4sWSpwq3LiO';
-      input.value = guardado;
-      cargarMusica(guardado);
+      const guardado = localStorage.getItem('miPlaylist');
+      if (guardado) {
+        input.value = guardado;
+        cargarMusica(guardado);
+        status.innerText = "TAPE READY";
+      } else {
+        status.innerText = "INSERT TAPE";
+      }
     };
 
     function cargarMusica(url) {
       if (url.includes("spotify.com")) {
+        // Forzamos el embed compacto de Spotify
         iframe.src = url.replace("open.spotify.com/", "open.spotify.com/embed/");
       } else {
         iframe.src = url;
@@ -195,6 +202,7 @@
       if (link) {
         localStorage.setItem('miPlaylist', link);
         cargarMusica(link);
+        status.innerText = "TAPE READY";
       }
     }
   </script>
