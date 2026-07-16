@@ -3,7 +3,7 @@ html_content = """<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Retro Cassette Player Widget - Camuflaje Spotify</title>
+    <title>Retro Cassette Player Widget - Spotify Real</title>
     <style>
         :root {
             --bg-color: #1a1a1a;
@@ -16,8 +16,6 @@ html_content = """<!DOCTYPE html>
             --cassette-label-text: #222;
             --wheel-color: #111;
             --wheel-teeth: #ff9f1c;
-            --window-bg: rgba(0, 0, 0, 0.4);
-            --reflection: rgba(255, 255, 255, 0.1);
         }
 
         [data-theme="light"] {
@@ -31,8 +29,6 @@ html_content = """<!DOCTYPE html>
             --cassette-label-text: #333;
             --wheel-color: #ccc;
             --wheel-teeth: #d62828;
-            --window-bg: rgba(0, 0, 0, 0.2);
-            --reflection: rgba(255, 255, 255, 0.4);
         }
 
         * {
@@ -61,10 +57,9 @@ html_content = """<!DOCTYPE html>
             padding: 24px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             position: relative;
-            overflow: hidden;
         }
 
-        /* Header controls */
+        /* Header */
         .header {
             display: flex;
             justify-content: space-between;
@@ -73,12 +68,11 @@ html_content = """<!DOCTYPE html>
         }
 
         .title {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: 800;
             letter-spacing: 2px;
             text-transform: uppercase;
             color: var(--accent-color);
-            text-shadow: 1px 1px 0px rgba(0,0,0,0.2);
         }
 
         .controls-top {
@@ -99,238 +93,148 @@ html_content = """<!DOCTYPE html>
             display: flex;
             align-items: center;
             gap: 5px;
-            box-shadow: inset 0 1px 3px rgba(255,255,255,0.1), 0 2px 4px rgba(0,0,0,0.2);
-        }
-
-        .theme-toggle:hover, .radio-mode-btn:hover, .bypass-off-btn:hover {
-            opacity: 0.9;
         }
 
         .bypass-off-btn {
             background: #d62828;
             color: white;
-            display: none; /* Hidden by default */
+            display: none;
         }
 
-        /* CASSETTE visual element */
+        /* CASSETTE visual */
         .cassette-player {
             width: 100%;
-            aspect-ratio: 1.6 / 1;
+            aspect-ratio: 1.65 / 1;
             background: var(--cassette-body);
             border-radius: 12px;
             border: 5px solid #111;
             position: relative;
             box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 5px 15px rgba(0,0,0,0.3);
-            padding: 15px;
+            padding: 12px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            overflow: hidden;
             margin-bottom: 20px;
-            z-index: 2; /* Arriba del iframe camuflado */
         }
 
-        /* Tape label */
         .cassette-label {
             background: var(--cassette-label);
             color: var(--cassette-label-text);
             border-radius: 6px;
-            flex-grow: 1;
-            max-height: 70%;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
+            padding: 8px;
             border: 2px solid #333;
             box-shadow: inset 0 2px 5px rgba(0,0,0,0.15);
-            position: relative;
         }
 
         .label-header {
             display: flex;
             justify-content: space-between;
-            border-bottom: 2px double #888;
-            padding-bottom: 4px;
-            font-size: 0.75rem;
+            border-bottom: 1px solid #888;
+            padding-bottom: 2px;
+            font-size: 0.7rem;
             font-family: 'Courier New', Courier, monospace;
             font-weight: bold;
         }
 
-        .track-title-wrapper {
-            background: repeating-linear-gradient(
-                0deg,
-                transparent,
-                transparent 14px,
-                #888 15px
-            );
-            height: 40px;
-            margin-top: 8px;
-            position: relative;
-        }
-
-        .track-title {
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 0.95rem;
-            font-weight: bold;
-            color: #111;
-            padding: 2px 5px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+        /* THE HOLE: El espacio donde se monta el Iframe real de Spotify */
+        .spotify-window-cutout {
             width: 100%;
-            position: absolute;
-            bottom: 6px;
-        }
-
-        /* Tape window and wheels */
-        .tape-window-container {
-            width: 60%;
-            height: 45px;
-            background: var(--window-bg);
-            border: 3px solid #111;
-            align-self: center;
-            border-radius: 4px;
-            position: relative;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            overflow: hidden;
-            box-shadow: inset 0 3px 10px rgba(0,0,0,0.8);
-        }
-
-        .tape-window-container::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(135deg, var(--reflection) 0%, transparent 50%, transparent 100%);
-            pointer-events: none;
-        }
-
-        /* Reels */
-        .reel {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: var(--wheel-color);
-            border: 2px dashed var(--wheel-teeth);
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .reel-center {
-            width: 12px;
-            height: 12px;
+            height: 84px; /* Tamaño exacto para el reproductor compacto de Spotify */
             background: #000;
-            border-radius: 50%;
+            border: 3px solid #111;
+            border-radius: 6px;
+            margin-top: 8px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 3px 10px rgba(0,0,0,0.9);
         }
 
-        /* Animations for wheels */
-        @keyframes spin-clockwise {
+        /* Iframe con interactividad real desbloqueada */
+        .spotify-interactive-iframe {
+            width: 100%;
+            height: 80px;
+            border: none;
+            background: transparent;
+            z-index: 10;
+            position: relative;
+        }
+
+        /* Decoración de carretes pequeños en las esquinas inferiores del hueco */
+        .reel-decoration {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px dashed var(--wheel-teeth);
+            background: var(--wheel-color);
+            top: 25px;
+            z-index: 1; /* Detrás del iframe si es opaco, visible en los bordes */
+            opacity: 0.4;
+        }
+        .reel-left-dec { left: 40px; }
+        .reel-right-dec { right: 40px; }
+
+        @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
-        @keyframes spin-counter {
-            from { transform: rotate(360deg); }
-            to { transform: rotate(0deg); }
+        .spinning {
+            animation: spin 2.5s linear infinite;
         }
 
-        .spinning-play {
-            animation: spin-clockwise 2s linear infinite;
-        }
-        .spinning-ff {
-            animation: spin-clockwise 0.4s linear infinite;
-        }
-        .spinning-rew {
-            animation: spin-counter 0.4s linear infinite;
-        }
-
-        /* Audio Tape representation inside window */
-        .tape-roll-left, .tape-roll-right {
-            position: absolute;
-            background: #2b1f1d;
-            border-radius: 50%;
-            top: 5px;
-            height: 32px;
-            transition: width 0.5s, height 0.5s;
-            z-index: -1;
-            opacity: 0.85;
-            box-shadow: 0 0 5px rgba(0,0,0,0.5);
-        }
-        .tape-roll-left {
-            left: 18%;
-            width: 50px;
-            height: 50px;
-            top: -4px;
-        }
-        .tape-roll-right {
-            right: 18%;
-            width: 50px;
-            height: 50px;
-            top: -4px;
-        }
-
-        /* Hardware cassette look trapezoid bottom */
+        /* Trapezoid bottom */
         .cassette-bottom {
-            height: 18px;
-            width: 70%;
+            height: 14px;
+            width: 60%;
             background: #111;
             align-self: center;
             border-radius: 4px 4px 0 0;
             display: flex;
             justify-content: space-around;
             align-items: center;
-            padding: 0 10px;
         }
         .cassette-hole {
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
             background: var(--panel-bg);
             border-radius: 50%;
         }
 
-        /* Analog physical buttons */
+        /* Physical Deck Buttons */
         .button-deck {
             display: flex;
             justify-content: space-between;
             background: #1a1a1a;
-            padding: 10px;
+            padding: 8px;
             border-radius: 8px;
             border: 3px solid var(--panel-border);
             box-shadow: inset 0 5px 10px rgba(0,0,0,0.5);
             margin-bottom: 20px;
-            position: relative;
-            z-index: 3;
         }
 
         .deck-btn {
             flex: 1;
-            margin: 0 4px;
-            height: 44px;
+            margin: 0 3px;
+            height: 40px;
             background: linear-gradient(to bottom, #444, #222);
             border: 1px solid #111;
-            border-bottom: 4px solid #000;
+            border-bottom: 3px solid #000;
             border-radius: 4px;
             color: #ccc;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: bold;
-            text-transform: uppercase;
             cursor: pointer;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            gap: 4px;
-            text-shadow: 0 -1px 0 rgba(0,0,0,0.8);
             box-shadow: 0 3px 5px rgba(0,0,0,0.4);
         }
 
         .deck-btn:active, .deck-btn.active {
             background: linear-gradient(to bottom, #222, #111);
             border-bottom-width: 1px;
-            transform: translateY(3px);
-            box-shadow: 0 0px 2px rgba(0,0,0,0.2);
+            transform: translateY(2px);
             color: var(--accent-color);
         }
 
@@ -340,9 +244,6 @@ html_content = """<!DOCTYPE html>
             border-radius: 8px;
             padding: 15px;
             border: 1px solid var(--panel-border);
-            margin-bottom: 15px;
-            position: relative;
-            z-index: 3;
         }
 
         .input-group {
@@ -354,13 +255,11 @@ html_content = """<!DOCTYPE html>
 
         label {
             display: block;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: bold;
             margin-bottom: 6px;
             text-transform: uppercase;
-            letter-spacing: 1px;
             color: var(--text-color);
-            opacity: 0.9;
         }
 
         .text-input {
@@ -370,123 +269,52 @@ html_content = """<!DOCTYPE html>
             color: #fff;
             padding: 8px 12px;
             border-radius: 6px;
-            font-size: 0.85rem;
-        }
-
-        /* Hidden MP3 Input */
-        .file-dropzone {
-            border: 2px dashed var(--panel-border);
-            border-radius: 6px;
-            padding: 12px;
-            text-align: center;
-            cursor: pointer;
-            background: rgba(0,0,0,0.1);
             font-size: 0.8rem;
-            font-weight: 500;
-        }
-        #file-input {
-            display: none;
         }
 
-        /* Volume slider */
-        .slider-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 5px;
-        }
-        .vol-slider {
-            flex-grow: 1;
-            -webkit-appearance: none;
-            background: #111;
-            height: 6px;
-            border-radius: 3px;
-            outline: none;
-        }
-        .vol-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: var(--accent-color);
-            cursor: pointer;
-        }
-
-        /* SPOTIFY CAMOUFLAGE SYSTEM (The Secret Bypass Layer) */
-        .spotify-camo-container {
-            position: absolute;
-            top: 85px; /* Directly behind the cassette's visual center */
-            left: calc(50% - 150px);
-            width: 300px;
-            height: 80px;
-            z-index: 1; /* Sits directly under the transparent window */
-            opacity: 0.15; /* Subtly visible to pass user interaction/CORS click bypass rules */
-            transition: opacity 0.3s;
-        }
-        
-        .spotify-camo-container:hover {
-            opacity: 0.7; /* Becomes actionable when needed, allows user to directly hit the play widget */
-        }
-
-        /* LED Indicator */
+        /* LED */
         .led-indicator {
             width: 8px;
             height: 8px;
             border-radius: 50%;
             background: #555;
-            box-shadow: 0 0 2px #000;
         }
         .led-indicator.active {
             background: #00ff00;
             box-shadow: 0 0 8px #00ff00;
         }
-        .led-indicator.warning {
-            background: #ffaa00;
-            box-shadow: 0 0 8px #ffaa00;
-        }
     </style>
 </head>
 <body>
 
-<div class="widget-container" id="player-widget">
+<div class="widget-container">
     <div class="header">
         <span class="title">Retro Cassette</span>
         <div class="controls-top">
             <div class="led-indicator" id="status-led"></div>
-            <button class="radio-mode-btn" id="radio-mode-btn" title="Activa sintetizador analógico de ruido">
-                📟 AM/FM BYPASS
-            </button>
-            <button class="bypass-off-btn" id="bypass-off-btn">
-                🛑 QUITAR BYPASS
-            </button>
-            <button class="theme-toggle" id="theme-toggle-btn">
-                🌗 TEMA
-            </button>
+            <button class="radio-mode-btn" id="radio-mode-btn">📟 ANALOG MODE</button>
+            <button class="bypass-off-btn" id="bypass-off-btn">🛑 STOP BYPASS</button>
+            <button class="theme-toggle" id="theme-toggle-btn">🌗 TEMA</button>
         </div>
     </div>
 
-    <!-- CASSETTE VISUAL WRAPPER -->
-    <div class="cassette-player" id="cassette-body-element">
+    <!-- CASSETTE -->
+    <div class="cassette-player">
         <div class="cassette-label">
             <div class="label-header">
                 <span>STEREO CASSETTE</span>
                 <span>C-90</span>
             </div>
-            <div class="track-title-wrapper">
-                <div class="track-title" id="track-display">SINTETIZADOR ANALÓGICO</div>
+            
+            <!-- EL HUECO TRANSPARENTE: Contiene el Iframe real e interactivo de Spotify -->
+            <div class="spotify-window-cutout">
+                <!-- Efectos de engranajes por detrás -->
+                <div class="reel-decoration reel-left-dec" id="r-left"></div>
+                <div class="reel-decoration reel-right-dec" id="r-right"></div>
+                
+                <!-- Iframe compactado real sin superposiciones molestas -->
+                <iframe class="spotify-interactive-iframe" id="spotify-iframe" src="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
             </div>
-        </div>
-
-        <!-- Reels Container Inside Window -->
-        <div class="tape-window-container">
-            <div class="tape-roll-left" id="tape-left"></div>
-            <div class="reel" id="reel-left">
-                <div class="reel-center"></div>
-            </div>
-            <div class="reel" id="reel-right">
-                <div class="reel-center"></div>
-            </div>
-            <div class="tape-roll-right" id="tape-right"></div>
         </div>
 
         <div class="cassette-bottom">
@@ -496,357 +324,92 @@ html_content = """<!DOCTYPE html>
         </div>
     </div>
 
-    <!-- DECK PHYSICAL BUTTONS -->
+    <!-- BOTONES AUXILIARES -->
     <div class="button-deck">
-        <button class="deck-btn" id="btn-rew" title="Retroceder">
-            ⏪<br>REW
-        </button>
-        <button class="deck-btn" id="btn-play" title="Reproducir">
-            ▶️<br>PLAY
-        </button>
-        <button class="deck-btn" id="btn-pause" title="Pausar">
-            ⏸️<br>PAUSE
-        </button>
-        <button class="deck-btn" id="btn-ff" title="Avanzar">
-            ⏩<br>F.FWD
-        </button>
-        <button class="deck-btn" id="btn-eject" title="Expulsar">
-            ⏏️<br>EJECT
-        </button>
+        <button class="deck-btn" id="btn-play">▶️<br>PLAY</button>
+        <button class="deck-btn" id="btn-pause">⏸️<br>PAUSE</button>
+        <button class="deck-btn" id="btn-eject">⏏️<br>EJECT</button>
     </div>
 
-    <!-- INTERACTIVE SETTINGS -->
+    <!-- CONFIG -->
     <div class="config-section">
         <div class="input-group">
-            <label>1. Enlace de Playlist/Canción Spotify (Camuflado)</label>
-            <input type="text" class="text-input" id="spotify-link" placeholder="Pegue enlace de Spotify: (https://open.spotify.com/...)" />
+            <label>Pega tu canción o playlist de Spotify:</label>
+            <input type="text" class="text-input" id="spotify-link" placeholder="https://open.spotify.com/track/... o playlist" />
         </div>
-        
-        <div class="input-group">
-            <label>2. Cargar Música Local (.MP3)</label>
-            <div class="file-dropzone" id="dropzone">
-                📁 Haz clic o arrastra tu .MP3 aquí
-            </div>
-            <input type="file" id="file-input" accept="audio/*">
-        </div>
-
-        <div class="input-group">
-            <label>Controles de Audio General</label>
-            <div class="slider-container">
-                <span>🔈</span>
-                <input type="range" class="vol-slider" id="volume-control" min="0" max="1" step="0.05" value="0.5">
-                <span>🔊</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- SPOTIFY IFRAME CAMOUFLAGED UNDERNEATH -->
-    <div class="spotify-camo-container" id="spotify-container">
-        <iframe id="spotify-iframe" src="" width="100%" height="80" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
     </div>
 </div>
 
 <script>
-    let audioContext = null;
-    let noiseNode = null;
-    let filterNode = null;
-    let localAudio = new Audio();
     let isPlaying = false;
-    let currentMode = 'analog'; // 'analog', 'local', 'spotify'
-    let spinState = '';
-
-    // UI Elements
-    const btnPlay = document.getElementById('btn-play');
-    const btnPause = document.getElementById('btn-pause');
-    const btnRew = document.getElementById('btn-rew');
-    const btnFF = document.getElementById('btn-ff');
-    const btnEject = document.getElementById('btn-eject');
+    const spotifyIframe = document.getElementById('spotify-iframe');
+    const spotifyLink = document.getElementById('spotify-link');
+    const statusLed = document.getElementById('status-led');
     const themeBtn = document.getElementById('theme-toggle-btn');
     const radioBtn = document.getElementById('radio-mode-btn');
     const bypassOffBtn = document.getElementById('bypass-off-btn');
-    const trackDisplay = document.getElementById('track-display');
-    const statusLed = document.getElementById('status-led');
-    const dropzone = document.getElementById('dropzone');
-    const fileInput = document.getElementById('file-input');
-    const volumeControl = document.getElementById('volume-control');
-    const spotifyLink = document.getElementById('spotify-link');
-    const spotifyIframe = document.getElementById('spotify-iframe');
-    const cassetteBody = document.getElementById('cassette-body-element');
+    const rLeft = document.getElementById('r-left');
+    const rRight = document.getElementById('r-right');
+    
+    const btnPlay = document.getElementById('btn-play');
+    const btnPause = document.getElementById('btn-pause');
+    const btnEject = document.getElementById('btn-eject');
 
-    const reelLeft = document.getElementById('reel-left');
-    const reelRight = document.getElementById('reel-right');
-    const tapeLeft = document.getElementById('tape-left');
-    const tapeRight = document.getElementById('tape-right');
+    // Cargar enlace guardado
+    const savedLink = localStorage.getItem('retro_spotify_link') || 'https://open.spotify.com/embed/playlist/37i9dQZF1DX8XZgIasS662';
+    spotifyLink.value = savedLink.replace('/embed', '');
+    updateIframe(savedLink);
 
-    // Restore cached Spotify Playlist
-    if (localStorage.getItem('cassette_playlist')) {
-        spotifyLink.value = localStorage.getItem('cassette_playlist');
-        updateSpotifyIframe(spotifyLink.value);
+    spotifyLink.addEventListener('input', (e) => {
+        let val = e.target.value;
+        if(val) {
+            localStorage.setItem('retro_spotify_link', val);
+            updateIframe(val);
+        }
+    });
+
+    function updateIframe(url) {
+        let embedUrl = url;
+        if (url.includes('spotify.com') && !url.includes('/embed')) {
+            embedUrl = url.replace('open.spotify.com/', 'open.spotify.com/embed/');
+        }
+        spotifyIframe.src = embedUrl;
+        statusLed.className = "led-indicator active";
     }
 
-    // Toggle Theme
+    // El play del casete físico activa la animación de engranajes de fondo
+    btnPlay.addEventListener('click', () => {
+        isPlaying = true;
+        rLeft.classList.add('spinning');
+        rRight.classList.add('spinning');
+        btnPlay.classList.add('active');
+        btnPause.classList.remove('active');
+        // Nota: Para iniciar la música, debes hacer clic directamente en el botón Play dentro de la ventana de Spotify.
+    });
+
+    btnPause.addEventListener('click', () => {
+        isPlaying = false;
+        rLeft.classList.remove('spinning');
+        rRight.classList.remove('spinning');
+        btnPlay.classList.remove('active');
+        btnPause.classList.add('active');
+    });
+
+    btnEject.addEventListener('click', () => {
+        isPlaying = false;
+        rLeft.classList.remove('spinning');
+        rRight.classList.remove('spinning');
+        btnPlay.classList.remove('active');
+        btnPause.classList.remove('active');
+        spotifyIframe.src = '';
+        spotifyLink.value = '';
+        localStorage.removeItem('retro_spotify_link');
+    });
+
     themeBtn.addEventListener('click', () => {
         const theme = document.body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
         document.body.setAttribute('data-theme', theme);
     });
-
-    // Save & Load Spotify URL Camouflage
-    spotifyLink.addEventListener('input', (e) => {
-        const link = e.target.value;
-        localStorage.setItem('cassette_playlist', link);
-        updateSpotifyIframe(link);
-    });
-
-    function updateSpotifyIframe(url) {
-        if (!url || !url.includes('spotify.com')) return;
-        
-        // Convert URLs seamlessly to Embed structures to bypass sandbox and CORS
-        let embedUrl = url;
-        if (!url.includes('/embed')) {
-            embedUrl = url.replace('open.spotify.com/', 'open.spotify.com/embed/');
-        }
-        
-        spotifyIframe.src = embedUrl;
-        currentMode = 'spotify';
-        trackDisplay.textContent = "SPOTIFY LINK: CONECTADO Y CAMUFLADO 🟢";
-        statusLed.className = "led-indicator active";
-        
-        // Make the window look interactive - revealing the player slightly underneath
-        cassetteBody.style.opacity = "0.93";
-    }
-
-    // Local Files Loader
-    dropzone.addEventListener('click', () => fileInput.click());
-    dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.style.borderColor = 'var(--accent-color)'; });
-    dropzone.addEventListener('dragleave', () => { dropzone.style.borderColor = 'var(--panel-border)'; });
-    dropzone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropzone.style.borderColor = 'var(--panel-border)';
-        if (e.dataTransfer.files.length > 0) loadLocalFile(e.dataTransfer.files[0]);
-    });
-    fileInput.addEventListener('change', (e) => {
-        if (e.target.files.length > 0) loadLocalFile(e.target.files[0]);
-    });
-
-    function loadLocalFile(file) {
-        const objectURL = URL.createObjectURL(file);
-        localAudio.src = objectURL;
-        trackDisplay.textContent = "CINTA LOCAL: " + file.name.toUpperCase();
-        currentMode = 'local';
-        statusLed.className = "led-indicator active";
-        stopAnalogNoise();
-        playAudio();
-    }
-
-    // Web Audio Analog Tape Hiss Generator
-    function initAudioContext() {
-        if (!audioContext) {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        }
-    }
-
-    function startAnalogNoise() {
-        initAudioContext();
-        if (audioContext.state === 'suspended') {
-            audioContext.resume();
-        }
-
-        const bufferSize = 2 * audioContext.sampleRate;
-        const noiseBuffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
-        const output = noiseBuffer.getChannelData(0);
-        let b0, b1, b2, b3, b4, b5, b6;
-        b0 = b1 = b2 = b3 = b4 = b5 = b6 = 0.0;
-
-        for (let i = 0; i < bufferSize; i++) {
-            const white = Math.random() * 2 - 1;
-            b0 = 0.99886 * b0 + white * 0.0555179;
-            b1 = 0.99332 * b1 + white * 0.0750759;
-            b2 = 0.96900 * b2 + white * 0.1538520;
-            b3 = 0.86650 * b3 + white * 0.3104856;
-            b4 = 0.55000 * b4 + white * 0.5329522;
-            b5 = -0.7616 * b5 - white * 0.0168980;
-            output[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
-            output[i] *= 0.11;
-            b6 = white * 0.115926;
-        }
-
-        noiseNode = audioContext.createBufferSource();
-        noiseNode.buffer = noiseBuffer;
-        noiseNode.loop = true;
-
-        filterNode = audioContext.createBiquadFilter();
-        filterNode.type = 'bandpass';
-        filterNode.frequency.value = 1000;
-        filterNode.Q.value = 0.4;
-
-        const gainNode = audioContext.createGain();
-        gainNode.gain.value = volumeControl.value * 0.12;
-
-        noiseNode.connect(filterNode);
-        filterNode.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        noiseNode.start(0);
-    }
-
-    function stopAnalogNoise() {
-        if (noiseNode) {
-            try { noiseNode.stop(); } catch(e) {}
-            noiseNode = null;
-        }
-    }
-
-    // Animation Speed States
-    function updateReelAnimation(state) {
-        spinState = state;
-        reelLeft.className = 'reel';
-        reelRight.className = 'reel';
-        if (state === 'play') {
-            reelLeft.classList.add('spinning-play');
-            reelRight.classList.add('spinning-play');
-        } else if (state === 'ff') {
-            reelLeft.classList.add('spinning-ff');
-            reelRight.classList.add('spinning-ff');
-        } else if (state === 'rew') {
-            reelLeft.classList.add('spinning-rew');
-            reelRight.classList.add('spinning-rew');
-        }
-    }
-
-    function playAudio() {
-        isPlaying = true;
-        btnPlay.classList.add('active');
-        btnPause.classList.remove('active');
-        statusLed.className = "led-indicator active";
-
-        if (currentMode === 'local') {
-            localAudio.play();
-            updateReelAnimation('play');
-        } else if (currentMode === 'analog') {
-            startAnalogNoise();
-            updateReelAnimation('play');
-            trackDisplay.textContent = "SINTETIZADOR DE CINTA ACTIVO";
-        } else if (currentMode === 'spotify') {
-            // En modo Spotify, el usuario interactúa directamente a través de la ventana translúcida
-            updateReelAnimation('play');
-            trackDisplay.textContent = "REPRODUCIENDO SPOTIFY (CAMUFLADO)";
-        }
-    }
-
-    function pauseAudio() {
-        isPlaying = false;
-        btnPlay.classList.remove('active');
-        btnPause.classList.add('active');
-        btnFF.classList.remove('active');
-        btnRew.classList.remove('active');
-        statusLed.className = "led-indicator warning";
-        
-        updateReelAnimation('');
-        if (currentMode === 'local') {
-            localAudio.pause();
-        } else if (currentMode === 'analog') {
-            stopAnalogNoise();
-        }
-    }
-
-    // Controls
-    btnPlay.addEventListener('click', () => playAudio());
-    btnPause.addEventListener('click', () => pauseAudio());
-
-    btnFF.addEventListener('click', () => {
-        if (!isPlaying) return;
-        btnFF.classList.add('active');
-        btnRew.classList.remove('active');
-        updateReelAnimation('ff');
-        if (currentMode === 'local') localAudio.currentTime += 5;
-    });
-
-    btnRew.addEventListener('click', () => {
-        if (!isPlaying) return;
-        btnRew.classList.add('active');
-        btnFF.classList.remove('active');
-        updateReelAnimation('rew');
-        if (currentMode === 'local') localAudio.currentTime -= 5;
-    });
-
-    btnEject.addEventListener('click', () => {
-        pauseAudio();
-        btnEject.classList.add('active');
-        setTimeout(() => btnEject.classList.remove('active'), 300);
-        currentMode = 'analog';
-        localAudio.src = '';
-        spotifyIframe.src = '';
-        spotifyLink.value = '';
-        localStorage.removeItem('cassette_playlist');
-        trackDisplay.textContent = "SINTETIZADOR ANALÓGICO";
-        statusLed.className = "led-indicator";
-    });
-
-    // AM/FM Bypass Trigger
-    radioBtn.addEventListener('click', () => {
-        currentMode = 'analog';
-        stopAnalogNoise();
-        trackDisplay.textContent = "BYPASS ANALÓGICO SELECCIONADO 📻";
-        radioBtn.style.display = 'none';
-        bypassOffBtn.style.display = 'flex';
-        
-        if (isPlaying) {
-            playAudio();
-        }
-    });
-
-    // CANCEL AM/FM Bypass Trigger
-    bypassOffBtn.addEventListener('click', () => {
-        stopAnalogNoise();
-        bypassOffBtn.style.display = 'none';
-        radioBtn.style.display = 'flex';
-        
-        if (spotifyLink.value) {
-            currentMode = 'spotify';
-            trackDisplay.textContent = "REPRODUCIENDO SPOTIFY (CAMUFLADO)";
-        } else {
-            currentMode = 'analog';
-            trackDisplay.textContent = "SINTETIZADOR ANALÓGICO";
-        }
-        
-        if (isPlaying) {
-            playAudio();
-        } else {
-            pauseAudio();
-        }
-    });
-
-    volumeControl.addEventListener('input', (e) => {
-        const vol = e.target.value;
-        localAudio.volume = vol;
-        if (isPlaying && currentMode === 'analog') {
-            stopAnalogNoise();
-            startAnalogNoise();
-        }
-    });
-
-    // Tape Wheels Dynamic Calculation
-    setInterval(() => {
-        if (isPlaying) {
-            let leftWidth = parseFloat(tapeLeft.style.width) || 50;
-            let rightWidth = parseFloat(tapeRight.style.width) || 50;
-
-            if (spinState === 'play' || spinState === 'ff') {
-                if (leftWidth > 32) {
-                    tapeLeft.style.width = (leftWidth - 0.05) + 'px';
-                    tapeLeft.style.height = (leftWidth - 0.05) + 'px';
-                    tapeRight.style.width = (rightWidth + 0.05) + 'px';
-                    tapeRight.style.height = (rightWidth + 0.05) + 'px';
-                }
-            } else if (spinState === 'rew') {
-                if (rightWidth > 32) {
-                    tapeLeft.style.width = (leftWidth + 0.2) + 'px';
-                    tapeLeft.style.height = (leftWidth + 0.2) + 'px';
-                    tapeRight.style.width = (rightWidth - 0.2) + 'px';
-                    tapeRight.style.height = (rightWidth - 0.2) + 'px';
-                }
-            }
-        }
-    }, 100);
 </script>
 </body>
 </html>
@@ -855,4 +418,4 @@ html_content = """<!DOCTYPE html>
 with open("index.html", "w", encoding="utf-8") as f:
     f.write(html_content)
 
-print("SUCCESS: index.html has been updated successfully with Spotify integration & Bypass cancellation.")
+print("SUCCESS: index.html has been redesigned with the native interactive compact Spotify window.")
