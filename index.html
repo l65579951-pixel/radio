@@ -105,11 +105,7 @@
             color: #fff;
         }
 
-        .radio-mode-btn:hover, .theme-toggle:hover {
-            opacity: 0.9;
-        }
-
-        /* DISEÑO DE LA CASETERA */
+        /* CASETERA ESTÉTICA */
         .cassette-player {
             width: 100%;
             aspect-ratio: 1.6 / 1;
@@ -124,6 +120,7 @@
             justify-content: space-between;
             overflow: hidden;
             margin-bottom: 20px;
+            z-index: 1;
         }
 
         .cassette-label {
@@ -165,7 +162,7 @@
 
         .track-title {
             font-family: 'Courier New', Courier, monospace;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-weight: bold;
             color: #111;
             padding: 2px 5px;
@@ -177,7 +174,7 @@
             bottom: 6px;
         }
 
-        /* VENTANA DE LA CINTA Y ENGRANAJES */
+        /* VENTANA DE GIRO */
         .tape-window-container {
             width: 60%;
             height: 45px;
@@ -191,15 +188,6 @@
             align-items: center;
             overflow: hidden;
             box-shadow: inset 0 3px 10px rgba(0,0,0,0.8);
-            z-index: 2;
-        }
-
-        .tape-window-container::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(135deg, var(--reflection) 0%, transparent 50%, transparent 100%);
-            pointer-events: none;
         }
 
         .reel {
@@ -230,15 +218,9 @@
             to { transform: rotate(0deg); }
         }
 
-        .spinning-play {
-            animation: spin-clockwise 2s linear infinite;
-        }
-        .spinning-ff {
-            animation: spin-clockwise 0.4s linear infinite;
-        }
-        .spinning-rew {
-            animation: spin-counter 0.4s linear infinite;
-        }
+        .spinning-play { animation: spin-clockwise 2s linear infinite; }
+        .spinning-ff { animation: spin-clockwise 0.4s linear infinite; }
+        .spinning-rew { animation: spin-counter 0.4s linear infinite; }
 
         .tape-roll-left, .tape-roll-right {
             position: absolute;
@@ -246,10 +228,8 @@
             border-radius: 50%;
             top: 5px;
             height: 32px;
-            transition: width 0.5s, height 0.5s;
             z-index: -1;
             opacity: 0.85;
-            box-shadow: 0 0 5px rgba(0,0,0,0.5);
         }
         .tape-roll-left { left: 18%; width: 50px; height: 50px; top: -4px; }
         .tape-roll-right { right: 18%; width: 50px; height: 50px; top: -4px; }
@@ -263,7 +243,6 @@
             display: flex;
             justify-content: space-around;
             align-items: center;
-            padding: 0 10px;
         }
         .cassette-hole {
             width: 8px;
@@ -272,7 +251,7 @@
             border-radius: 50%;
         }
 
-        /* BOTONERA FÍSICA ANALÓGICA */
+        /* BOTONERA ANALÓGICA */
         .button-deck {
             display: flex;
             justify-content: space-between;
@@ -282,6 +261,7 @@
             border: 3px solid var(--panel-border);
             box-shadow: inset 0 5px 10px rgba(0,0,0,0.5);
             margin-bottom: 20px;
+            position: relative;
         }
 
         .deck-btn {
@@ -302,8 +282,8 @@
             justify-content: center;
             align-items: center;
             gap: 4px;
-            text-shadow: 0 -1px 0 rgba(0,0,0,0.8);
             box-shadow: 0 3px 5px rgba(0,0,0,0.4);
+            position: relative;
         }
 
         .deck-btn:active, .deck-btn.active {
@@ -314,7 +294,39 @@
             color: var(--accent-color);
         }
 
-        /* SECCIÓN DE CONFIGURACIÓN */
+        /* 
+           HACK DE CAMUFLAJE:
+           Este contenedor transparente se sienta EXACTAMENTE sobre el botón PLAY/PAUSE físico.
+           El iframe de Spotify se mete dentro, se escala y se desplaza para que su botón de reproducir nativo
+           quede perfectamente alineado sobre tu botón físico.
+        */
+        .spotify-click-hack {
+            position: absolute;
+            width: 78px;  /* Ajustado al ancho del botón físico */
+            height: 44px; /* Ajustado al alto del botón físico */
+            left: 92px;   /* Posición exacta sobre el botón PLAY en la botonera */
+            top: 10px;
+            overflow: hidden;
+            opacity: 0.001; /* Invisible pero clickable */
+            z-index: 10;   /* Por encima de todo para interceptar los clics */
+            pointer-events: none; /* Por defecto desactivado (en bypass) */
+        }
+
+        /* Cuando no estamos en Bypass, habilitamos la intercepción de clics */
+        .spotify-click-hack.active-camo {
+            pointer-events: auto;
+        }
+
+        .spotify-click-hack iframe {
+            position: absolute;
+            width: 300px;
+            height: 80px;
+            top: -18px;   /* Desplazamiento vertical para centrar el botón de Spotify */
+            right: -25px; /* Desplazamiento horizontal para alinear el botón de Play */
+            border: none;
+        }
+
+        /* SECCIÓN CONFIGURACIÓN */
         .config-section {
             background: rgba(0,0,0,0.15);
             border-radius: 8px;
@@ -324,15 +336,12 @@
         }
 
         .input-group { margin-bottom: 12px; }
-        .input-group:last-child { margin-bottom: 0; }
-
         label {
             display: block;
             font-size: 0.8rem;
             font-weight: bold;
             margin-bottom: 6px;
             text-transform: uppercase;
-            letter-spacing: 1px;
             color: var(--text-color);
             opacity: 0.9;
         }
@@ -346,10 +355,6 @@
             border-radius: 6px;
             font-size: 0.85rem;
         }
-        .text-input:focus {
-            outline: none;
-            border-color: var(--accent-color);
-        }
 
         .file-dropzone {
             border: 2px dashed var(--panel-border);
@@ -359,56 +364,30 @@
             cursor: pointer;
             background: rgba(0,0,0,0.1);
             font-size: 0.8rem;
-            font-weight: 500;
         }
-        .file-dropzone:hover {
-            border-color: var(--accent-color);
-            background: rgba(0,0,0,0.2);
-        }
+
         #file-input { display: none; }
 
         .slider-container {
             display: flex;
             align-items: center;
             gap: 10px;
-            margin-top: 5px;
         }
+
         .vol-slider {
             flex-grow: 1;
             -webkit-appearance: none;
             background: #111;
             height: 6px;
             border-radius: 3px;
-            outline: none;
         }
         .vol-slider::-webkit-slider-thumb {
             -webkit-appearance: none;
-            appearance: none;
             width: 16px;
             height: 16px;
             border-radius: 50%;
             background: var(--accent-color);
             cursor: pointer;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.5);
-        }
-
-        /* FACHADA SPOTIFY TOTALMENTE CAMUFLADA */
-        .spotify-camo-wrapper {
-            position: absolute;
-            top: 25px;
-            left: 20px;
-            right: 20px;
-            height: 80px;
-            z-index: 1; /* Queda detrás de la ventana de la cinta pero visible en la etiqueta */
-            border-radius: 4px;
-            overflow: hidden;
-            background: #000;
-        }
-
-        .spotify-camo-container {
-            width: 100%;
-            height: 100%;
-            opacity: 1; /* Al integrarse estéticamente, se deja visible como la etiqueta misma de la cinta */
         }
 
         .led-indicator {
@@ -416,16 +395,9 @@
             height: 8px;
             border-radius: 50%;
             background: #555;
-            box-shadow: 0 0 2px #000;
         }
-        .led-indicator.active {
-            background: #00ff00;
-            box-shadow: 0 0 8px #00ff00;
-        }
-        .led-indicator.warning {
-            background: #ffaa00;
-            box-shadow: 0 0 8px #ffaa00;
-        }
+        .led-indicator.active { background: #00ff00; box-shadow: 0 0 8px #00ff00; }
+        .led-indicator.warning { background: #ffaa00; box-shadow: 0 0 8px #ffaa00; }
     </style>
 </head>
 <body>
@@ -435,21 +407,15 @@
         <span class="title">Retro Cassette</span>
         <div class="controls-top">
             <div class="led-indicator" id="status-led"></div>
-            <!-- Botón interactivo para activar y desactivar Bypass Analógico -->
-            <button class="radio-mode-btn active-bypass" id="radio-mode-btn">📟 BYPASS: ACTIVADO</button>
+            <!-- Botón para apagar/encender bypass analógico -->
+            <button class="radio-mode-btn active-bypass" id="radio-mode-btn">📟 BYPASS: SÍ</button>
             <button class="theme-toggle" id="theme-toggle-btn">🌗 TEMA</button>
         </div>
     </div>
 
+    <!-- El cuerpo físico del cassette -->
     <div class="cassette-player">
-        <!-- Fachada de Spotify camuflada como la etiqueta de papel del casete -->
-        <div class="spotify-camo-wrapper" id="spotify-wrapper">
-            <div class="spotify-camo-container" id="spotify-container">
-                <iframe id="spotify-iframe" width="100%" height="80" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
-            </div>
-        </div>
-
-        <div class="cassette-label" style="pointer-events: none; z-index: 0;">
+        <div class="cassette-label">
             <div class="label-header">
                 <span>STEREO CASSETTE</span>
                 <span>C-90</span>
@@ -466,36 +432,41 @@
             <div class="tape-roll-right" id="tape-right"></div>
         </div>
 
-        <div class="cassette-bottom" style="z-index: 2;">
+        <div class="cassette-bottom">
             <div class="cassette-hole"></div>
             <div class="cassette-hole"></div>
             <div class="cassette-hole"></div>
         </div>
     </div>
 
-    <!-- BOTONERA DE CONTROL -->
+    <!-- BOTONERA DE CONTROL CON EL HACK DE COBERTURA -->
     <div class="button-deck">
         <button class="deck-btn" id="btn-rew">⏪<br>REW</button>
         <button class="deck-btn" id="btn-play">▶️<br>PLAY</button>
         <button class="deck-btn" id="btn-pause">⏸️<br>PAUSE</button>
         <button class="deck-btn" id="btn-ff">⏩<br>F.FWD</button>
         <button class="deck-btn" id="btn-eject">⏏️<br>EJECT</button>
+
+        <!-- CAPA INVISIBLE COBERTURA: Se posiciona perfectamente arriba de tu botón "PLAY" -->
+        <div class="spotify-click-hack" id="camo-overlay">
+            <iframe id="spotify-iframe" src="" allowtransparency="true" allow="encrypted-media"></iframe>
+        </div>
     </div>
 
     <div class="config-section">
         <div class="input-group">
-            <label>1. Enlace de Playlist Spotify (Se auto-guarda)</label>
-            <input type="text" class="text-input" id="spotify-link" placeholder="Pegue el enlace de la playlist (ej. https://open.spotify.com/playlist/...)" />
+            <label>1. Enlace de Playlist Spotify (Se autoguarda)</label>
+            <input type="text" class="text-input" id="spotify-link" placeholder="Pegue el enlace de la playlist..." />
         </div>
         
         <div class="input-group">
-            <label>2. Cargar Música Local (.MP3)</label>
+            <label>2. Cargar Música Local (.MP3) - Sin CORS</label>
             <div class="file-dropzone" id="dropzone">📁 Haz clic o arrastra tu .MP3 aquí</div>
             <input type="file" id="file-input" accept="audio/*">
         </div>
 
         <div class="input-group">
-            <label>Controles de Volumen</label>
+            <label>Volumen General</label>
             <div class="slider-container">
                 <span>🔈</span>
                 <input type="range" class="vol-slider" id="volume-control" min="0" max="1" step="0.05" value="0.5">
@@ -511,8 +482,8 @@
     let filterNode = null;
     let localAudio = new Audio();
     let isPlaying = false;
-    let bypassActive = true; // Por defecto inicia en bypass analógico (pitido/siseo de cinta)
-    let currentMode = 'analog'; // 'analog' | 'local' | 'spotify'
+    let bypassActive = true; // Por defecto inicia con el ruido analógico activado
+    let currentMode = 'analog';
     let spinState = '';
 
     const btnPlay = document.getElementById('btn-play');
@@ -529,27 +500,26 @@
     const volumeControl = document.getElementById('volume-control');
     const spotifyLink = document.getElementById('spotify-link');
     const spotifyIframe = document.getElementById('spotify-iframe');
-    const spotifyWrapper = document.getElementById('spotify-wrapper');
+    const camoOverlay = document.getElementById('camo-overlay');
 
     const reelLeft = document.getElementById('reel-left');
     const reelRight = document.getElementById('reel-right');
     const tapeLeft = document.getElementById('tape-left');
     const tapeRight = document.getElementById('tape-right');
 
-    // Recuperar última playlist guardada en localStorage
+    // Cargar última playlist del localStorage
     const savedPlaylist = localStorage.getItem('cassette_playlist');
     if (savedPlaylist) {
         spotifyLink.value = savedPlaylist;
         updateSpotifyIframe(savedPlaylist);
     }
 
-    // Cambiar Tema (Claro / Oscuro)
+    // Toggle modo claro/oscuro
     themeBtn.addEventListener('click', () => {
         const theme = document.body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
         document.body.setAttribute('data-theme', theme);
     });
 
-    // Guardar playlist y actualizar iframe dinámicamente
     spotifyLink.addEventListener('input', (e) => {
         const link = e.target.value;
         localStorage.setItem('cassette_playlist', link);
@@ -559,59 +529,63 @@
     function updateSpotifyIframe(url) {
         if (!url) return;
         let embedUrl = url;
-        // Convertir URL normal de Spotify en el formato /embed/ para permitir la interfaz visual
         if (url.includes('spotify.com') && !url.includes('/embed')) {
             embedUrl = url.replace('spotify.com/', 'spotify.com/embed/');
         }
         spotifyIframe.src = embedUrl;
-        
-        // Si hay una URL cargada y desactivamos el bypass, tomamos el modo spotify
-        if (!bypassActive) {
-            currentMode = 'spotify';
-            trackDisplay.textContent = "CONECTADO A SPOTIFY (INTERFAZ INCRUSTADA)";
-            statusLed.className = "led-indicator active";
-        }
     }
 
-    // Activar / Desactivar el bypass analógico
+    // CONTROL DEL BYPASS ANALÓGICO
     radioBtn.addEventListener('click', () => {
         bypassActive = !bypassActive;
         if (bypassActive) {
             radioBtn.classList.add('active-bypass');
-            radioBtn.textContent = "📟 BYPASS: ACTIVADO";
+            radioBtn.textContent = "📟 BYPASS: SÍ";
+            camoOverlay.classList.remove('active-camo'); // Desactivamos el hack de clic
             currentMode = 'analog';
             trackDisplay.textContent = "SINTETIZADOR ANALÓGICO";
-            spotifyWrapper.style.opacity = "0.1"; // Atenúa Spotify para dar prioridad al siseo
-            spotifyWrapper.style.pointerEvents = "none";
             if (isPlaying) {
-                if (localAudio) localAudio.pause();
+                localAudio.pause();
                 startAnalogNoise();
             }
         } else {
             radioBtn.classList.remove('active-bypass');
-            radioBtn.textContent = "📟 BYPASS: APAGADO";
+            radioBtn.textContent = "📟 BYPASS: NO";
             stopAnalogNoise();
 
-            // Decidir qué modo de reproducción toma el control al apagar el bypass
             if (localAudio.src && localAudio.src !== window.location.href) {
                 currentMode = 'local';
-                trackDisplay.textContent = "AUDIO LOCAL: " + (fileInput.files[0] ? fileInput.files[0].name : "Archivo cargado");
-                spotifyWrapper.style.opacity = "0.1";
-                spotifyWrapper.style.pointerEvents = "none";
+                trackDisplay.textContent = "MÚSICA LOCAL ACTIVA";
                 if (isPlaying) localAudio.play();
             } else if (spotifyLink.value) {
                 currentMode = 'spotify';
-                trackDisplay.textContent = "REPRODUCTOR SPOTIFY EN ETIQUETA";
-                spotifyWrapper.style.opacity = "1"; // Activa totalmente la interacción con Spotify
-                spotifyWrapper.style.pointerEvents = "all";
+                trackDisplay.textContent = "CONECTADO A SPOTIFY (BOTÓN HACKEADO)";
+                camoOverlay.classList.add('active-camo'); // ¡Habilitamos el hack del clic!
             } else {
-                currentMode = 'analog'; // Fallback si no hay nada cargado
-                trackDisplay.textContent = "INSERTE MP3 O ENLACE DE SPOTIFY";
+                trackDisplay.textContent = "PEGA UNA PLAYLIST O CARGA UN MP3";
             }
         }
     });
 
-    // Cargar Archivos Locales (Drag & Drop y Explorer)
+    // Detectar si el usuario hace clic sobre el área de Spotify (solo funciona cuando bypass está apagado)
+    camoOverlay.addEventListener('click', () => {
+        if (currentMode === 'spotify') {
+            isPlaying = !isPlaying;
+            if (isPlaying) {
+                btnPlay.classList.add('active');
+                btnPause.classList.remove('active');
+                updateReelAnimation('play');
+                statusLed.className = "led-indicator active";
+            } else {
+                btnPlay.classList.remove('active');
+                btnPause.classList.add('active');
+                updateReelAnimation('');
+                statusLed.className = "led-indicator warning";
+            }
+        }
+    });
+
+    // Subir Música Local (.MP3)
     dropzone.addEventListener('click', () => fileInput.click());
     dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.style.borderColor = 'var(--accent-color)'; });
     dropzone.addEventListener('dragleave', () => dropzone.style.borderColor = 'var(--panel-border)');
@@ -620,7 +594,6 @@
         dropzone.style.borderColor = 'var(--panel-border)';
         if (e.dataTransfer.files.length > 0) loadLocalFile(e.dataTransfer.files[0]);
     });
-
     fileInput.addEventListener('change', (e) => {
         if (e.target.files.length > 0) loadLocalFile(e.target.files[0]);
     });
@@ -629,20 +602,16 @@
         const objectURL = URL.createObjectURL(file);
         localAudio.src = objectURL;
         trackDisplay.textContent = file.name;
-        
-        // Al cargar un archivo local, desactivamos temporalmente la vista de Spotify
-        spotifyWrapper.style.opacity = "0.1";
-        spotifyWrapper.style.pointerEvents = "none";
-        
         currentMode = 'local';
-        statusLed.className = "led-indicator active";
-        
-        // Apagamos el sintetizador analógico de ruido
+        bypassActive = false;
+        radioBtn.classList.remove('active-bypass');
+        radioBtn.textContent = "📟 BYPASS: NO";
+        camoOverlay.classList.remove('active-camo'); // Sin spotify overlay
         stopAnalogNoise();
         playAudio();
     }
 
-    // SINTETIZADOR DE RUIDO ANALÓGICO (Web Audio API)
+    // WEBAUDIO SINTETIZADOR
     function initAudioContext() {
         if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
     }
@@ -652,7 +621,21 @@
         if (audioContext.state === 'suspended') audioContext.resume();
 
         const bufferSize = 2 * audioContext.sampleRate;
-        const noiseBuffer = noiseBufferCreator(bufferSize);
+        const noiseBuffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        let b0 = 0.0, b1 = 0.0, b2 = 0.0, b3 = 0.0, b4 = 0.0, b5 = 0.0;
+
+        for (let i = 0; i < bufferSize; i++) {
+            const white = Math.random() * 2 - 1;
+            b0 = 0.99886 * b0 + white * 0.0555179;
+            b1 = 0.99332 * b1 + white * 0.0750759;
+            b2 = 0.96900 * b2 + white * 0.1538520;
+            b3 = 0.86650 * b3 + white * 0.3104856;
+            b4 = 0.55000 * b4 + white * 0.5329522;
+            b5 = -0.7616 * b5 - white * 0.0168980;
+            output[i] = b0 + b1 + b2 + b3 + b4 + b5 + white * 0.11;
+            output[i] *= 0.15;
+        }
 
         noiseNode = audioContext.createBufferSource();
         noiseNode.buffer = noiseBuffer;
@@ -661,7 +644,7 @@
         filterNode = audioContext.createBiquadFilter();
         filterNode.type = 'bandpass';
         filterNode.frequency.value = 1000;
-        filterNode.Q.value = 0.4; // Tono retro cálido de cinta magnética
+        filterNode.Q.value = 0.4;
 
         const gainNode = audioContext.createGain();
         gainNode.gain.value = volumeControl.value * 0.15;
@@ -669,28 +652,7 @@
         noiseNode.connect(filterNode);
         filterNode.connect(gainNode);
         gainNode.connect(audioContext.destination);
-
         noiseNode.start(0);
-    }
-
-    function noiseBufferCreator(bufferSize) {
-        const noiseBuffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
-        const output = noiseBuffer.getChannelData(0);
-        let b0 = 0.0, b1 = 0.0, b2 = 0.0, b3 = 0.0, b4 = 0.0, b5 = 0.0;
-
-        for (let i = 0; i < bufferSize; i++) {
-            const white = Math.random() * 2 - 1;
-            // Algoritmo de filtrado para simular Ruido Rosa/Marrón (siseo de casete)
-            b0 = 0.99886 * b0 + white * 0.0555179;
-            b1 = 0.99332 * b1 + white * 0.0750759;
-            b2 = 0.96900 * b2 + white * 0.1538520;
-            b3 = 0.86650 * b3 + white * 0.3104856;
-            b4 = 0.55000 * b4 + white * 0.5329522;
-            b5 = -0.7616 * b5 - white * 0.0168980;
-            output[i] = b0 + b1 + b2 + b3 + b4 + b5 + white * 0.11;
-            output[i] *= 0.15; // Atenuación del volumen base
-        }
-        return noiseBuffer;
     }
 
     function stopAnalogNoise() {
@@ -700,7 +662,7 @@
         }
     }
 
-    // ANIMACIÓN DE LOS ENGRANAJES
+    // ANIMACIONES
     function updateReelAnimation(state) {
         spinState = state;
         reelLeft.className = 'reel';
@@ -718,6 +680,7 @@
     }
 
     function playAudio() {
+        if (currentMode === 'spotify') return; // En modo spotify, el control lo toma el clickjacking
         isPlaying = true;
         btnPlay.classList.add('active');
         btnPause.classList.remove('active');
@@ -729,20 +692,14 @@
         } else if (currentMode === 'analog') {
             startAnalogNoise();
             updateReelAnimation('play');
-            trackDisplay.textContent = "SINTETIZADOR DE CINTA ACTIVO";
-        } else if (currentMode === 'spotify') {
-            // Animación activada manualmente para acompañar la fachada estética
-            updateReelAnimation('play');
-            trackDisplay.textContent = "ESCUCHANDO DESDE SPOTIFY";
         }
     }
 
     function pauseAudio() {
+        if (currentMode === 'spotify') return; // En modo spotify, el control lo toma el clickjacking
         isPlaying = false;
         btnPlay.classList.remove('active');
         btnPause.classList.add('active');
-        btnFF.classList.remove('active');
-        btnRew.classList.remove('active');
         statusLed.className = "led-indicator warning";
         updateReelAnimation('');
 
@@ -757,27 +714,21 @@
     btnPause.addEventListener('click', pauseAudio);
 
     btnFF.addEventListener('click', () => {
+        if (currentMode === 'spotify') return;
         if (!isPlaying) return;
-        btnFF.classList.add('active');
-        btnRew.classList.remove('active');
         updateReelAnimation('ff');
-        if (currentMode === 'local') localAudio.currentTime += 8;
+        if (currentMode === 'local') localAudio.currentTime += 5;
     });
 
     btnRew.addEventListener('click', () => {
+        if (currentMode === 'spotify') return;
         if (!isPlaying) return;
-        btnRew.classList.add('active');
-        btnFF.classList.remove('active');
         updateReelAnimation('rew');
-        if (currentMode === 'local') localAudio.currentTime -= 8;
+        if (currentMode === 'local') localAudio.currentTime -= 5;
     });
 
     btnEject.addEventListener('click', () => {
         pauseAudio();
-        btnEject.classList.add('active');
-        setTimeout(() => btnEject.classList.remove('active'), 300);
-        
-        // Reset general
         currentMode = 'analog';
         localAudio.src = '';
         trackDisplay.textContent = "SINTETIZADOR ANALÓGICO";
@@ -785,15 +736,10 @@
     });
 
     volumeControl.addEventListener('input', (e) => {
-        const vol = e.target.value;
-        localAudio.volume = vol;
-        if (isPlaying && currentMode === 'analog') {
-            stopAnalogNoise();
-            startAnalogNoise();
-        }
+        localAudio.volume = e.target.value;
     });
 
-    // SIMULACIÓN FÍSICA DE LA TRANSFERENCIA DE CINTA ENTRE CARRETES
+    // Movimiento físico de la cinta
     setInterval(() => {
         if (isPlaying) {
             let leftWidth = parseFloat(tapeLeft.style.width) || 50;
