@@ -248,6 +248,8 @@
       opacity: 0;
       pointer-events: none;
       transition: opacity .25s ease;
+      overflow-y: auto;
+      max-height: 100%;
     }
 
     .config-drawer.visible {
@@ -262,6 +264,7 @@
       margin-bottom: 12px;
       border-bottom: 1px solid var(--border-color);
       padding-bottom: 6px;
+      flex-shrink: 0;
     }
 
     .drawer-title,
@@ -288,6 +291,7 @@
 
     .input-group {
       margin-bottom: 8px;
+      flex-shrink: 0;
     }
 
     .text-input {
@@ -301,18 +305,19 @@
     }
 
     .spotify-container {
-      margin-top: 152px;
       border-radius: 8px;
       overflow: hidden;
       background: #000;
       border: 1px solid var(--border-color);
       height: 152px;
+      flex-shrink: 0;
+      margin: 8px 0;
     }
 
     .spotify-save-btn {
       width: 100%;
-      margin-top: 8px;
       padding: 7px 10px;
+      flex-shrink: 0;
     }
 
     .saved-links {
@@ -321,6 +326,8 @@
       overflow-y: auto;
       border-top: 1px solid var(--border-color);
       padding-top: 7px;
+      flex-shrink: 1;
+      min-height: 0;
     }
 
     .saved-links-title {
@@ -329,6 +336,7 @@
       font-weight: 700;
       text-transform: uppercase;
       opacity: .8;
+      flex-shrink: 0;
     }
 
     .saved-link-item {
