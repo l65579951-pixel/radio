@@ -1,153 +1,636 @@
-<script>
-let audioContext = null;
-let noiseNode = null;
-let filterNode = null;
-const localAudio = new Audio();
-let isPlaying = false;
-let currentMode = 'analog';
-let isAnalogBypassActive = true;
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Retro Cassette Player - Notion Edition</title>
 
-const btnPlay = document.getElementById('btn-play');
-const btnPause = document.getElementById('btn-pause');
-const btnRew = document.getElementById('btn-rew');
-const btnFF = document.getElementById('btn-ff');
-const btnEject = document.getElementById('btn-eject');
-const radioBtn = document.getElementById('radio-mode-btn');
-const radioOffBtn = document.getElementById('radio-off-btn');
-const trackDisplay = document.getElementById('track-display');
-const statusLed = document.getElementById('status-led');
-const themeToggleBtn = document.getElementById('theme-toggle-btn');
-const settingsBtn = document.getElementById('settings-btn');
-const closeDrawerBtn = document.getElementById('close-drawer-btn');
-const configDrawer = document.getElementById('config-drawer');
-const dropzone = document.getElementById('dropzone');
-const fileInput = document.getElementById('file-input');
-const volumeControl = document.getElementById('volume-control');
-const spotifyLink = document.getElementById('spotify-link');
-const spotifyIframe = document.getElementById('spotify-iframe');
-const saveSpotifyLinkBtn = document.getElementById('save-spotify-link');
-const savedSpotifyLinks = document.getElementById('saved-spotify-links');
-const reelLeft = document.getElementById('reel-left');
-const reelRight = document.getElementById('reel-right');
-const casetePhysical = document.getElementById('casete-physical');
+  <style>
+    :root {
+      --bg-color: #ffffff;
+      --container-bg: #ffffff;
+      --text-color: #37352f;
+      --border-color: #e9e9e6;
+      --visor-bg: #f1f1ef;
+      --visor-text: #37352f;
+      --drawer-bg: rgba(255, 255, 255, 0.95);
+      --led-on: #eb5757;
+      --led-off: #472424;
+    }
 
-const SAVED_SPOTIFY_LINKS_KEY = 'saved_spotify_links';
+    [data-theme="dark"] {
+      --bg-color: #191919;
+      --container-bg: #191919;
+      --text-color: #e8e8e8;
+      --border-color: #2a2a2a;
+      --visor-bg: #202020;
+      --visor-text: #ebffff;
+      --drawer-bg: rgba(32, 32, 32, 0.95);
+      --led-on: #ff7373;
+      --led-off: #3d1d1d;
+    }
 
-const spotifyIcon = document.createElement('span');
-spotifyIcon.textContent = '🎵';
-spotifyIcon.style.marginRight = '6px';
-document.querySelector('label[for="spotify-link"]').prepend(spotifyIcon);
+    * {
+      box-sizing: border-box;
+    }
 
-radioBtn.classList.add('active');
-statusLed.classList.add('active');
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      transition: background-color .2s ease, color .2s ease;
+    }
 
-function detectarTipoSpotify(url) {
-    const enlace = (url || '').toLowerCase();
+    .player-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px;
+      background: var(--container-bg);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+    }
 
-    if (enlace.includes('/playlist/')) return { type: 'playlist', icon: '🎵', label: 'Playlist' };
-    if (enlace.includes('/track/')) return { type: 'track', icon: '🎧', label: 'Canción' };
-    if (enlace.includes('/album/')) return { type: 'album', icon: '💿', label: 'Álbum' };
-    if (enlace.includes('/artist/')) return { type: 'artist', icon: '👤', label: 'Artista' };
-    if (enlace.includes('/episode/') || enlace.includes('/show/')) return { type: 'podcast', icon: '🎙️', label: 'Podcast' };
+    .header-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      margin-bottom: 10px;
+      gap: 8px;
+    }
 
-    return { type: 'unknown', icon: '🔗', label: 'Enlace' };
-}
+    .theme-toggle,
+    .spotify-save-btn {
+      background: var(--visor-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-color);
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: .75rem;
+      font-weight: 700;
+    }
 
-function actualizarIconoSpotify(url) {
-    spotifyIcon.textContent = detectarTipoSpotify(url).icon;
-}
+    .theme-toggle {
+      padding: 6px 12px;
+    }
 
-function normalizarEnlaceSpotify(valor) {
-    const texto = String(valor || '').trim();
-    const coincidencia = texto.match(
+    .visor-texto {
+      background-color: var(--visor-bg);
+      color: var(--visor-text);
+      font-family: monospace;
+      font-size: .75rem;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 5px;
+      border: 1px solid var(--border-color);
+      text-align: center;
+      flex-grow: 1;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .grabadora-container {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1.34 / 1;
+      background-image: url('https://i.postimg.cc/ncXV4Sc5/grabadora-roja-removebg-preview.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+
+    .led-indicator {
+      position: absolute;
+      top: 45.5%;
+      left: 14%;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--led-off);
+      box-shadow: 0 0 2px rgba(0,0,0,.5);
+      z-index: 5;
+    }
+
+    .led-indicator.active {
+      background-color: var(--led-on);
+      box-shadow: 0 0 6px var(--led-on);
+    }
+
+    .compartment-mask {
+      position: absolute;
+      top: 47.8%;
+      left: 36.5%;
+      width: 27%;
+      height: 18.2%;
+      overflow: hidden;
+      z-index: 2;
+    }
+
+    .casete-asset {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background-image: url('https://i.postimg.cc/9fWvpztK/casette-rojo-removebg-preview.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      transition: transform .8s cubic-bezier(.25, 1, .5, 1), opacity .5s;
+      transform: translateY(115%);
+      opacity: 0;
+    }
+
+    .casete-asset.inserted {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .tape-window-overlay {
+      position: absolute;
+      top: 36%;
+      left: 20%;
+      width: 60%;
+      height: 30%;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      pointer-events: none;
+    }
+
+    .reel-overlay {
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      border: 3px dashed #fff;
+      background: rgba(0,0,0,.6);
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0); }
+      to { transform: rotate(360deg); }
+    }
+
+    .spinning {
+      animation: spin 2s linear infinite;
+    }
+
+    .mapeo-botones {
+      position: absolute;
+      top: 44.2%;
+      left: 24.8%;
+      width: 50.4%;
+      height: 6.5%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .btn-fisico {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.01);
+      border: 1px solid transparent;
+      cursor: pointer;
+    }
+
+    .btn-fisico:hover {
+      background: rgba(255,255,255,.2);
+    }
+
+    .btn-fisico.active,
+    .btn-fisico:active {
+      background: rgba(255,255,255,.4);
+    }
+
+    .settings-trigger {
+      position: absolute;
+      right: 14%;
+      top: 44%;
+      width: 26px;
+      height: 26px;
+      background: var(--visor-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 50%;
+      color: var(--text-color);
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 12;
+    }
+
+    .config-drawer {
+      position: absolute;
+      inset: 0;
+      background: var(--drawer-bg);
+      border-radius: 8px;
+      padding: 15px;
+      z-index: 15;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      backdrop-filter: blur(5px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .25s ease;
+    }
+
+    .config-drawer.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .drawer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 6px;
+    }
+
+    .drawer-title,
+    label {
+      font-size: .65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-color);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 4px;
+      opacity: .8;
+    }
+
+    .close-btn {
+      background: none;
+      border: 0;
+      color: var(--text-color);
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
+
+    .input-group {
+      margin-bottom: 8px;
+    }
+
+    .text-input {
+      width: 100%;
+      background: var(--visor-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-color);
+      padding: 6px 10px;
+      border-radius: 5px;
+      font-size: .75rem;
+    }
+
+    .spotify-container {
+      margin-top: 5px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #000;
+      border: 1px solid var(--border-color);
+      height: 152px;
+    }
+
+    .spotify-save-btn {
+      width: 100%;
+      margin-top: 8px;
+      padding: 7px 10px;
+    }
+
+    .saved-links {
+      max-height: 148px;
+      margin-top: 8px;
+      overflow-y: auto;
+      border-top: 1px solid var(--border-color);
+      padding-top: 7px;
+    }
+
+    .saved-links-title {
+      margin: 0 0 5px;
+      font-size: .65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      opacity: .8;
+    }
+
+    .saved-link-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      width: 100%;
+      padding: 5px 0;
+      border: 0;
+      border-bottom: 1px solid var(--border-color);
+      background: transparent;
+      color: var(--text-color);
+      cursor: pointer;
+      text-align: left;
+      font: inherit;
+      font-size: .72rem;
+    }
+
+    .saved-link-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+    }
+
+    .delete-link-btn {
+      border: 0;
+      border-radius: 4px;
+      background: transparent;
+      color: var(--text-color);
+      cursor: pointer;
+      padding: 3px 4px;
+      font-size: .68rem;
+    }
+
+    .file-dropzone {
+      border: 1px dashed var(--border-color);
+      border-radius: 5px;
+      padding: 8px;
+      text-align: center;
+      cursor: pointer;
+      font-size: .7rem;
+      background: var(--visor-bg);
+      color: var(--text-color);
+    }
+
+    #file-input {
+      display: none;
+    }
+
+    .slider-container {
+      display: flex;
+      align-items: center;
+    }
+
+    .vol-slider {
+      width: 100%;
+      height: 4px;
+      background: var(--border-color);
+      outline: none;
+      appearance: none;
+      border-radius: 2px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="player-wrapper">
+    <div class="header-controls">
+      <button class="theme-toggle" id="theme-toggle-btn">🌓 TEMA</button>
+      <div class="visor-texto" id="track-display">SINTETIZADOR ANALÓGICO LISTO</div>
+    </div>
+
+    <div class="grabadora-container">
+      <div class="led-indicator" id="status-led"></div>
+
+      <div class="compartment-mask">
+        <div class="casete-asset" id="casete-physical">
+          <div class="tape-window-overlay">
+            <div class="reel-overlay" id="reel-left"></div>
+            <div class="reel-overlay" id="reel-right"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mapeo-botones">
+        <button class="btn-fisico" id="btn-rew" title="Retroceder"></button>
+        <button class="btn-fisico" id="btn-ff" title="Avanzar"></button>
+        <button class="btn-fisico" id="btn-play" title="Reproducir"></button>
+        <button class="btn-fisico" id="btn-pause" title="Pausar"></button>
+        <button class="btn-fisico" id="btn-eject" title="Expulsar"></button>
+        <button class="btn-fisico" id="radio-mode-btn" title="Activar bypass"></button>
+        <button class="btn-fisico" id="radio-off-btn" title="Desactivar bypass"></button>
+      </div>
+
+      <button class="settings-trigger" id="settings-btn" title="Ajustes">⚙️</button>
+
+      <div class="config-drawer" id="config-drawer">
+        <div class="drawer-header">
+          <span class="drawer-title">Configuración</span>
+          <button class="close-btn" id="close-drawer-btn">×</button>
+        </div>
+
+        <div class="input-group">
+          <label for="spotify-link">🎵 Playlist Spotify</label>
+          <input
+            type="text"
+            class="text-input"
+            id="spotify-link"
+            placeholder="Pegar enlace de Spotify..."
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="off"
+            spellcheck="false">
+        </div>
+
+        <div class="spotify-container">
+          <iframe
+            id="spotify-iframe"
+            width="100%"
+            height="152"
+            frameborder="0"
+            allowtransparency="true"
+            allow="encrypted-media">
+          </iframe>
+        </div>
+
+        <button type="button" class="spotify-save-btn" id="save-spotify-link">💾 Guardar</button>
+
+        <section class="saved-links">
+          <p class="saved-links-title">Enlaces guardados</p>
+          <div id="saved-spotify-links"></div>
+        </section>
+
+        <div class="input-group" style="margin-top:10px;">
+          <label>Audio local (.MP3)</label>
+          <div class="file-dropzone" id="dropzone">📁 Cargar archivo</div>
+          <input type="file" id="file-input" accept="audio/*">
+        </div>
+
+        <div class="input-group">
+          <label for="volume-control">Volumen</label>
+          <div class="slider-container">
+            <input type="range" class="vol-slider" id="volume-control" min="0" max="1" step="0.05" value="0.5">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let audioContext = null;
+    let noiseNode = null;
+    const localAudio = new Audio();
+    let isPlaying = false;
+    let currentMode = 'analog';
+    let isAnalogBypassActive = true;
+
+    const btnPlay = document.getElementById('btn-play');
+    const btnPause = document.getElementById('btn-pause');
+    const btnRew = document.getElementById('btn-rew');
+    const btnFF = document.getElementById('btn-ff');
+    const btnEject = document.getElementById('btn-eject');
+    const radioBtn = document.getElementById('radio-mode-btn');
+    const radioOffBtn = document.getElementById('radio-off-btn');
+    const trackDisplay = document.getElementById('track-display');
+    const statusLed = document.getElementById('status-led');
+    const themeToggleBtn = document.getElementById('theme-toggle-btn');
+    const settingsBtn = document.getElementById('settings-btn');
+    const closeDrawerBtn = document.getElementById('close-drawer-btn');
+    const configDrawer = document.getElementById('config-drawer');
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('file-input');
+    const volumeControl = document.getElementById('volume-control');
+    const spotifyLink = document.getElementById('spotify-link');
+    const spotifyIframe = document.getElementById('spotify-iframe');
+    const saveSpotifyLinkBtn = document.getElementById('save-spotify-link');
+    const savedSpotifyLinks = document.getElementById('saved-spotify-links');
+    const reelLeft = document.getElementById('reel-left');
+    const reelRight = document.getElementById('reel-right');
+    const casetePhysical = document.getElementById('casete-physical');
+
+    const SAVED_SPOTIFY_LINKS_KEY = 'saved_spotify_links';
+
+    radioBtn.classList.add('active');
+    statusLed.classList.add('active');
+
+    function detectarTipoSpotify(url) {
+      const enlace = (url || '').toLowerCase();
+
+      if (enlace.includes('/playlist/')) return { type: 'playlist', icon: '🎵', label: 'Playlist' };
+      if (enlace.includes('/track/')) return { type: 'track', icon: '🎧', label: 'Canción' };
+      if (enlace.includes('/album/')) return { type: 'album', icon: '💿', label: 'Álbum' };
+      if (enlace.includes('/artist/')) return { type: 'artist', icon: '👤', label: 'Artista' };
+      if (enlace.includes('/episode/') || enlace.includes('/show/')) return { type: 'podcast', icon: '🎙️', label: 'Podcast' };
+
+      return { type: 'unknown', icon: '🔗', label: 'Enlace' };
+    }
+
+    /*
+      ESTA ES LA CORRECCIÓN PARA NOTION:
+      Convierte enlaces como:
+      open.spotify.com/intl-es/playlist/...
+      en:
+      open.spotify.com/embed/playlist/...
+    */
+    function normalizarEnlaceSpotify(valor) {
+      const texto = String(valor || '').trim();
+
+      const coincidencia = texto.match(
         /(?:https?:\/\/)?(?:open\.spotify\.com|play\.spotify\.com)\/[^\s<>"']+|spotify:(?:playlist|track|album|artist|show|episode):[A-Za-z0-9]+/i
-    );
+      );
 
-    const enlace = (coincidencia ? coincidencia[0] : texto).trim();
-    const uri = enlace.match(/^spotify:(playlist|track|album|artist|show|episode):([A-Za-z0-9]+)$/i);
+      const enlace = (coincidencia ? coincidencia[0] : texto).trim();
 
-    if (uri) {
+      const uri = enlace.match(
+        /^spotify:(playlist|track|album|artist|show|episode):([A-Za-z0-9]+)$/i
+      );
+
+      if (uri) {
         const tipo = uri[1].toLowerCase();
         const id = uri[2];
 
         return {
-            url: `https://open.spotify.com/${tipo}/${id}`,
-            embedUrl: `https://open.spotify.com/embed/${tipo}/${id}`
+          url: `https://open.spotify.com/${tipo}/${id}`,
+          embedUrl: `https://open.spotify.com/embed/${tipo}/${id}`
         };
-    }
+      }
 
-    const urlConProtocolo = /^https?:\/\//i.test(enlace) ? enlace : `https://${enlace}`;
-    const url = new URL(urlConProtocolo);
+      const urlConProtocolo = /^https?:\/\//i.test(enlace)
+        ? enlace
+        : `https://${enlace}`;
 
-    if (!['open.spotify.com', 'play.spotify.com'].includes(url.hostname.toLowerCase())) {
+      const url = new URL(urlConProtocolo);
+
+      if (!['open.spotify.com', 'play.spotify.com'].includes(url.hostname.toLowerCase())) {
         throw new Error('El enlace no pertenece a Spotify.');
-    }
+      }
 
-    const partes = url.pathname.split('/').filter(Boolean);
-    const tiposValidos = ['playlist', 'track', 'album', 'artist', 'show', 'episode'];
-    const posicionTipo = partes.findIndex(parte => tiposValidos.includes(parte.toLowerCase()));
+      const partes = url.pathname.split('/').filter(Boolean);
+      const tiposValidos = ['playlist', 'track', 'album', 'artist', 'show', 'episode'];
+      const posicionTipo = partes.findIndex(parte =>
+        tiposValidos.includes(parte.toLowerCase())
+      );
 
-    if (posicionTipo === -1 || !partes[posicionTipo + 1]) {
+      if (posicionTipo === -1 || !partes[posicionTipo + 1]) {
         throw new Error('No se encontró contenido válido de Spotify.');
-    }
+      }
 
-    const tipo = partes[posicionTipo].toLowerCase();
-    const id = partes[posicionTipo + 1];
+      const tipo = partes[posicionTipo].toLowerCase();
+      const id = partes[posicionTipo + 1];
 
-    return {
+      return {
         url: `https://open.spotify.com/${tipo}/${id}`,
         embedUrl: `https://open.spotify.com/embed/${tipo}/${id}`
-    };
-}
+      };
+    }
 
-function procesarEnlaceSpotify(url) {
-    const spotify = normalizarEnlaceSpotify(url);
+    function procesarEnlaceSpotify(url) {
+      const spotify = normalizarEnlaceSpotify(url);
 
-    spotifyIframe.src = spotify.embedUrl;
-    spotifyLink.value = spotify.url;
-    currentMode = 'spotify';
-    trackDisplay.textContent = 'SPOTIFY CONFIGURADO';
+      spotifyIframe.src = spotify.embedUrl;
+      spotifyLink.value = spotify.url;
+      currentMode = 'spotify';
+      trackDisplay.textContent = 'SPOTIFY CONFIGURADO';
 
-    casetePhysical.classList.remove('inserted');
+      casetePhysical.classList.remove('inserted');
 
-    setTimeout(() => {
+      setTimeout(() => {
         casetePhysical.classList.add('inserted');
-    }, 100);
+      }, 100);
 
-    return spotify.url;
-}
+      return spotify.url;
+    }
 
-function obtenerEnlacesGuardados() {
-    try {
+    function obtenerEnlacesGuardados() {
+      try {
         const links = JSON.parse(localStorage.getItem(SAVED_SPOTIFY_LINKS_KEY));
         return Array.isArray(links) ? links : [];
-    } catch {
+      } catch {
         return [];
+      }
     }
-}
 
-function guardarEnlacesGuardados(links) {
-    localStorage.setItem(SAVED_SPOTIFY_LINKS_KEY, JSON.stringify(links));
-}
+    function guardarEnlacesGuardados(links) {
+      localStorage.setItem(SAVED_SPOTIFY_LINKS_KEY, JSON.stringify(links));
+    }
 
-function nombreAutomatico(tipo, links) {
-    const cantidad = links.filter(link => link.type === tipo.type).length + 1;
-    return `${tipo.label} ${cantidad}`;
-}
+    function renderizarEnlacesGuardados() {
+      const links = obtenerEnlacesGuardados();
+      savedSpotifyLinks.replaceChildren();
 
-function renderizarEnlacesGuardados() {
-    const links = obtenerEnlacesGuardados();
-    savedSpotifyLinks.replaceChildren();
-
-    if (!links.length) {
+      if (!links.length) {
         const empty = document.createElement('p');
         empty.textContent = 'Aún no hay enlaces guardados.';
         savedSpotifyLinks.append(empty);
         return;
-    }
+      }
 
-    links.forEach((link) => {
-        const row = document.createElement('div');
+      links.forEach((link) => {
+        const row = document.createElement('button');
+        row.type = 'button';
         row.className = 'saved-link-item';
         row.title = link.url;
 
@@ -158,246 +641,267 @@ function renderizarEnlacesGuardados() {
         const remove = document.createElement('button');
         remove.type = 'button';
         remove.className = 'delete-link-btn';
-        remove.textContent = '🗑 Eliminar';
+        remove.textContent = '🗑';
 
         remove.addEventListener('click', (event) => {
-            event.stopPropagation();
+          event.stopPropagation();
 
-            guardarEnlacesGuardados(
-                obtenerEnlacesGuardados().filter(item => item.url !== link.url)
-            );
-            renderizarEnlacesGuardados();
+          guardarEnlacesGuardados(
+            obtenerEnlacesGuardados().filter(item => item.url !== link.url)
+          );
+
+          renderizarEnlacesGuardados();
         });
 
         row.addEventListener('click', () => {
-            try {
-                const enlaceLimpio = procesarEnlaceSpotify(link.url);
-                localStorage.setItem('last_spotify_playlist', enlaceLimpio);
-            } catch {
-                trackDisplay.textContent = 'ENLACE SPOTIFY NO VÁLIDO';
-            }
+          try {
+            const enlaceLimpio = procesarEnlaceSpotify(link.url);
+            localStorage.setItem('last_spotify_playlist', enlaceLimpio);
+          } catch {
+            trackDisplay.textContent = 'ENLACE SPOTIFY NO VÁLIDO';
+          }
         });
 
         row.append(name, remove);
         savedSpotifyLinks.append(row);
-    });
-}
-
-function playAudio() {
-    isPlaying = true;
-    btnPlay.classList.add('active');
-    btnPause.classList.remove('active');
-    statusLed.classList.add('active');
-    reelLeft.className = 'reel-overlay spinning';
-    reelRight.className = 'reel-overlay spinning';
-
-    if (currentMode === 'local') {
-        localAudio.play();
-    } else if (currentMode === 'analog') {
-        startAnalogNoise();
-        trackDisplay.textContent = 'SINTETIZADOR ACTIVO';
-    } else if (currentMode === 'spotify') {
-        trackDisplay.textContent = 'SPOTIFY ACTIVO';
+      });
     }
-}
 
-function pauseAudio() {
-    isPlaying = false;
-    btnPlay.classList.remove('active');
-    btnPause.classList.add('active');
-    statusLed.classList.remove('active');
-    reelLeft.className = 'reel-overlay';
-    reelRight.className = 'reel-overlay';
+    function actualizarVisuales(reproduciendo) {
+      isPlaying = reproduciendo;
+      btnPlay.classList.toggle('active', reproduciendo);
+      btnPause.classList.toggle('active', !reproduciendo);
+      statusLed.classList.toggle('active', reproduciendo);
 
-    if (currentMode === 'local') localAudio.pause();
-    else stopAnalogNoise();
-}
+      reelLeft.className = reproduciendo ? 'reel-overlay spinning' : 'reel-overlay';
+      reelRight.className = reproduciendo ? 'reel-overlay spinning' : 'reel-overlay';
+    }
 
-function initAudioContext() {
-    if (!audioContext) {
+    function iniciarRuidoAnalogico() {
+      if (!isAnalogBypassActive || noiseNode) return;
+
+      if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    }
-}
+      }
 
-function startAnalogNoise() {
-    if (!isAnalogBypassActive || noiseNode) return;
+      if (audioContext.state === 'suspended') audioContext.resume();
 
-    initAudioContext();
+      const bufferSize = 2 * audioContext.sampleRate;
+      const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+      const output = buffer.getChannelData(0);
 
-    if (audioContext.state === 'suspended') audioContext.resume();
-
-    const bufferSize = 2 * audioContext.sampleRate;
-    const noiseBuffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
-    const output = noiseBuffer.getChannelData(0);
-
-    for (let i = 0; i < bufferSize; i++) {
+      for (let i = 0; i < bufferSize; i++) {
         output[i] = (Math.random() * 2 - 1) * 0.012;
+      }
+
+      noiseNode = audioContext.createBufferSource();
+      noiseNode.buffer = buffer;
+      noiseNode.loop = true;
+
+      const filter = audioContext.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.value = 1000;
+
+      const gain = audioContext.createGain();
+      gain.gain.value = volumeControl.value;
+
+      noiseNode.connect(filter);
+      filter.connect(gain);
+      gain.connect(audioContext.destination);
+      noiseNode.start();
     }
 
-    noiseNode = audioContext.createBufferSource();
-    noiseNode.buffer = noiseBuffer;
-    noiseNode.loop = true;
+    function detenerRuidoAnalogico() {
+      if (!noiseNode) return;
 
-    filterNode = audioContext.createBiquadFilter();
-    filterNode.type = 'bandpass';
-    filterNode.frequency.value = 1000;
+      try {
+        noiseNode.stop();
+      } catch {}
 
-    const gainNode = audioContext.createGain();
-    gainNode.gain.value = volumeControl.value;
-
-    noiseNode.connect(filterNode);
-    filterNode.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    noiseNode.start(0);
-}
-
-function stopAnalogNoise() {
-    if (noiseNode) {
-        try { noiseNode.stop(); } catch {}
-        noiseNode = null;
+      noiseNode = null;
     }
-}
 
-function cargarAudioLocal(file) {
-    localAudio.src = URL.createObjectURL(file);
-    trackDisplay.textContent = file.name.toUpperCase();
-    currentMode = 'local';
-    stopAnalogNoise();
+    function reproducir() {
+      actualizarVisuales(true);
 
-    casetePhysical.classList.remove('inserted');
+      if (currentMode === 'local') {
+        localAudio.play();
+      } else if (currentMode === 'analog') {
+        iniciarRuidoAnalogico();
+        trackDisplay.textContent = 'SINTETIZADOR ACTIVO';
+      } else if (currentMode === 'spotify') {
+        trackDisplay.textContent = 'SPOTIFY ACTIVO';
+      }
+    }
 
-    setTimeout(() => {
+    function pausar() {
+      actualizarVisuales(false);
+
+      if (currentMode === 'local') {
+        localAudio.pause();
+      } else {
+        detenerRuidoAnalogico();
+      }
+    }
+
+    function cargarAudioLocal(file) {
+      localAudio.src = URL.createObjectURL(file);
+      localAudio.volume = volumeControl.value;
+      currentMode = 'local';
+      trackDisplay.textContent = file.name.toUpperCase();
+      detenerRuidoAnalogico();
+
+      casetePhysical.classList.remove('inserted');
+
+      setTimeout(() => {
         casetePhysical.classList.add('inserted');
-        playAudio();
-    }, 100);
-}
-
-window.addEventListener('DOMContentLoaded', () => {
-    const savedTheme = localStorage.getItem('app-theme') || 'light';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-
-    renderizarEnlacesGuardados();
-
-    const lastLink = localStorage.getItem('last_spotify_playlist');
-    if (lastLink) {
-        try {
-            procesarEnlaceSpotify(lastLink);
-            actualizarIconoSpotify(lastLink);
-        } catch {
-            localStorage.removeItem('last_spotify_playlist');
-        }
+        reproducir();
+      }, 100);
     }
-});
 
-themeToggleBtn.addEventListener('click', () => {
-    const newTheme = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', newTheme);
-    localStorage.setItem('app-theme', newTheme);
-});
+    window.addEventListener('DOMContentLoaded', () => {
+      const tema = localStorage.getItem('app-theme') || 'light';
+      document.documentElement.setAttribute('data-theme', tema);
 
-settingsBtn.addEventListener('click', () => configDrawer.classList.add('visible'));
-closeDrawerBtn.addEventListener('click', () => configDrawer.classList.remove('visible'));
+      renderizarEnlacesGuardados();
 
-spotifyLink.addEventListener('input', (event) => {
-    const url = event.target.value.trim();
-    actualizarIconoSpotify(url);
+      const ultimoEnlace = localStorage.getItem('last_spotify_playlist');
 
-    if (!url) {
-        localStorage.removeItem('last_spotify_playlist');
+      if (ultimoEnlace) {
+        try {
+          procesarEnlaceSpotify(ultimoEnlace);
+        } catch {
+          localStorage.removeItem('last_spotify_playlist');
+        }
+      }
+    });
+
+    themeToggleBtn.addEventListener('click', () => {
+      const temaActual = document.documentElement.getAttribute('data-theme');
+      const nuevoTema = temaActual === 'light' ? 'dark' : 'light';
+
+      document.documentElement.setAttribute('data-theme', nuevoTema);
+      localStorage.setItem('app-theme', nuevoTema);
+    });
+
+    settingsBtn.addEventListener('click', () => {
+      configDrawer.classList.add('visible');
+    });
+
+    closeDrawerBtn.addEventListener('click', () => {
+      configDrawer.classList.remove('visible');
+    });
+
+    spotifyLink.addEventListener('input', (event) => {
+      const url = event.target.value.trim();
+
+      if (!url) {
         spotifyIframe.src = '';
+        localStorage.removeItem('last_spotify_playlist');
         currentMode = 'analog';
         return;
-    }
+      }
 
-    try {
+      try {
         const enlaceLimpio = procesarEnlaceSpotify(url);
         localStorage.setItem('last_spotify_playlist', enlaceLimpio);
-    } catch {
-        // Espera a que se termine de pegar el enlace.
-    }
-});
+      } catch {
+        /* Espera a que termine de pegarse el enlace. */
+      }
+    });
 
-saveSpotifyLinkBtn.addEventListener('click', () => {
-    let url;
+    saveSpotifyLinkBtn.addEventListener('click', () => {
+      let url;
 
-    try {
+      try {
         url = procesarEnlaceSpotify(spotifyLink.value);
-    } catch {
+      } catch {
         trackDisplay.textContent = 'ENLACE SPOTIFY NO VÁLIDO';
         return;
-    }
+      }
 
-    const links = obtenerEnlacesGuardados();
-    if (links.some(link => link.url === url)) return;
+      const links = obtenerEnlacesGuardados();
 
-    const tipo = detectarTipoSpotify(url);
+      if (links.some(link => link.url === url)) return;
 
-    links.unshift({
+      const tipo = detectarTipoSpotify(url);
+      const cantidad = links.filter(link => link.type === tipo.type).length + 1;
+
+      links.unshift({
         url,
         type: tipo.type,
         icon: tipo.icon,
-        name: nombreAutomatico(tipo, links),
-        savedAt: Date.now()
+        name: `${tipo.label} ${cantidad}`
+      });
+
+      guardarEnlacesGuardados(links);
+      localStorage.setItem('last_spotify_playlist', url);
+      renderizarEnlacesGuardados();
     });
 
-    guardarEnlacesGuardados(links);
-    localStorage.setItem('last_spotify_playlist', url);
-    renderizarEnlacesGuardados();
-});
+    dropzone.addEventListener('click', () => fileInput.click());
 
-dropzone.addEventListener('click', () => fileInput.click());
+    dropzone.addEventListener('dragover', (event) => {
+      event.preventDefault();
+    });
 
-dropzone.addEventListener('dragover', (event) => event.preventDefault());
+    dropzone.addEventListener('drop', (event) => {
+      event.preventDefault();
 
-dropzone.addEventListener('drop', (event) => {
-    event.preventDefault();
-    if (event.dataTransfer.files.length > 0) cargarAudioLocal(event.dataTransfer.files[0]);
-});
+      if (event.dataTransfer.files.length > 0) {
+        cargarAudioLocal(event.dataTransfer.files[0]);
+      }
+    });
 
-fileInput.addEventListener('change', (event) => {
-    if (event.target.files.length > 0) cargarAudioLocal(event.target.files[0]);
-});
+    fileInput.addEventListener('change', (event) => {
+      if (event.target.files.length > 0) {
+        cargarAudioLocal(event.target.files[0]);
+      }
+    });
 
-btnPlay.addEventListener('click', playAudio);
-btnPause.addEventListener('click', pauseAudio);
+    volumeControl.addEventListener('input', (event) => {
+      localAudio.volume = event.target.value;
+    });
 
-btnFF.addEventListener('click', () => {
-    if (currentMode === 'local') localAudio.currentTime += 5;
-});
+    btnPlay.addEventListener('click', reproducir);
+    btnPause.addEventListener('click', pausar);
 
-btnRew.addEventListener('click', () => {
-    if (currentMode === 'local') localAudio.currentTime = Math.max(0, localAudio.currentTime - 5);
-});
+    btnFF.addEventListener('click', () => {
+      if (currentMode === 'local') localAudio.currentTime += 5;
+    });
 
-btnEject.addEventListener('click', () => {
-    pauseAudio();
-    stopAnalogNoise();
-    localAudio.src = '';
-    spotifyIframe.src = '';
-    trackDisplay.textContent = 'CASSETE EXPULSADO';
-    casetePhysical.classList.remove('inserted');
-});
+    btnRew.addEventListener('click', () => {
+      if (currentMode === 'local') {
+        localAudio.currentTime = Math.max(0, localAudio.currentTime - 5);
+      }
+    });
 
-radioBtn.addEventListener('click', () => {
-    isAnalogBypassActive = true;
-    radioBtn.classList.add('active');
-    radioOffBtn.classList.remove('active');
-    statusLed.classList.add('active');
-    trackDisplay.textContent = 'BYPASS ANALÓGICO ACTIVADO';
+    btnEject.addEventListener('click', () => {
+      pausar();
+      detenerRuidoAnalogico();
+      localAudio.src = '';
+      spotifyIframe.src = '';
+      currentMode = 'analog';
+      trackDisplay.textContent = 'CASSETE EXPULSADO';
+      casetePhysical.classList.remove('inserted');
+    });
 
-    if (isPlaying) startAnalogNoise();
-});
+    radioBtn.addEventListener('click', () => {
+      isAnalogBypassActive = true;
+      radioBtn.classList.add('active');
+      radioOffBtn.classList.remove('active');
+      trackDisplay.textContent = 'BYPASS ANALÓGICO ACTIVADO';
 
-radioOffBtn.addEventListener('click', () => {
-    isAnalogBypassActive = false;
-    radioBtn.classList.remove('active');
-    radioOffBtn.classList.add('active');
-    statusLed.classList.remove('active');
-    stopAnalogNoise();
-    trackDisplay.textContent = 'SINTETIZADOR DESACTIVADO';
-});
+      if (isPlaying && currentMode === 'analog') iniciarRuidoAnalogico();
+    });
 
-volumeControl.addEventListener('input', (event) => {
-    localAudio.volume = event.target.value;
-});
-</script>
+    radioOffBtn.addEventListener('click', () => {
+      isAnalogBypassActive = false;
+      radioBtn.classList.remove('active');
+      radioOffBtn.classList.add('active');
+      detenerRuidoAnalogico();
+      trackDisplay.textContent = 'SINTETIZADOR DESACTIVADO';
+    });
+  </script>
+</body>
+</html>
